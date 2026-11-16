@@ -1,20 +1,23 @@
+import secrets
 import threading
 from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import timedelta
-from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
-from common import api, body, text, raw_text, integer, boolean, ApiError
+from common import api, authenticated, body, text, raw_text, integer, boolean, ApiError
 from courses.models import Course
 from courses.models import Enrollment
 from courses.access import can_manage_course, can_manage_run, resolve_run, require_run, require_learning_enrollment
-from learning.services import require_activity_visible, refresh_completion
+from learning.services import require_activity_visible
 from .models import CodeProblem, TestCase, CodeSubmission
-from .runner import run_python, runtime_path
+from .runner import runtime_path
+from .tasks import judge_submission, practice_run, practice_key, practice_busy_key, PRACTICE_TTL, QUEUE_EXPIRES, STALE_AFTER
 
+# Limits checks that run inline in the web process (no Celery broker configured).
 CAPACITY = threading.BoundedSemaphore(settings.LMS_CODEJUDGE_SLOTS)
 
 
@@ -90,54 +93,86 @@ def problem_detail(request, problem_id):
         'attempts_used': submissions.exclude(status='service_error').count(), 'available': runtime_path().is_file()})
 
 
+def submission_payload(record):
+    if record.status == 'running':
+        return {'id': record.id, 'status': 'running'}
+    return {'id': record.id, 'status': record.status, 'passed': record.passed, 'total': record.total, 'details': record.details}
+
+
+def expire_stale(submissions):
+    submissions.filter(status='running', created_at__lt=timezone.now()-STALE_AFTER).update(status='service_error')
+
+
+def practice_payload(entry):
+    if 'error' in entry:
+        raise ApiError(entry['error'], entry['code'])
+    return entry.get('result') or {'status': 'running'}
+
+
 @require_POST
 @api
 def execute(request, problem_id):
+    """Queue a check. Answers 200 with the verdict when it finished inline (no broker),
+    otherwise 202 with an id/token to poll via submission_status / practice_status."""
     problem = get_object_or_404(CodeProblem.objects.select_related('course'), pk=problem_id)
     run = problem_access(request, problem)
     data = body(request)
     code = raw_text(data, 'code', 20000, True)
     submit = boolean(data, 'submit', False)
     stdin = raw_text(data, 'stdin', 10000)
-    if not CAPACITY.acquire(blocking=False):
+    inline = settings.CELERY_TASK_ALWAYS_EAGER
+    if inline and not CAPACITY.acquire(blocking=False):
         raise ApiError('Проверяющая система занята. Повторите через несколько секунд.', 429)
-    record = None
     try:
         if submit:
             with transaction.atomic():
                 problem = CodeProblem.objects.select_for_update().get(pk=problem.id)
                 enrollment = require_learning_enrollment(request, run, lock=True)
-                problem.submissions.filter(enrollment=enrollment, status='running', created_at__lt=timezone.now()-timedelta(minutes=2)).update(status='service_error')
+                expire_stale(problem.submissions.filter(enrollment=enrollment))
                 if problem.submissions.filter(enrollment=enrollment, status='running').exists():
                     raise ApiError('Предыдущее решение ещё проверяется', 409)
                 if problem.submissions.filter(enrollment=enrollment).exclude(status='service_error').count() >= problem.max_attempts:
                     raise ApiError('Попытки отправки решения использованы')
+                if not problem.test_cases.exists():
+                    raise ApiError('В задаче нет проверочных тестов')
                 record = CodeSubmission.objects.create(problem=problem, enrollment=enrollment, code=code)
-            cases = list(problem.test_cases.all())
-            if not cases:
-                raise ApiError('В задаче нет проверочных тестов')
-            results = run_python(code, [c.stdin for c in cases])
-            details, passed = [], 0
-            for case, result in zip(cases, results):
-                ok = result['status'] == 'ok' and result['stdout'].strip() == case.expected.strip()
-                passed += int(ok)
-                detail = {'sample': case.is_sample, 'status': 'accepted' if ok else 'wrong_answer' if result['status'] == 'ok' else result['status']}
-                if case.is_sample:
-                    detail.update({'stdout': result['stdout'], 'stderr': result['stderr']})
-                details.append(detail)
-            record.passed, record.total, record.details = passed, len(cases), details
-            record.status = 'accepted' if passed == len(cases) else 'rejected'
-            record.save()
-            refresh_completion(enrollment)
-            from analytics.tracking import record as record_activity
-            record_activity(request.user, 'code_submitted', enrollment=enrollment, dedupe=f'code:{record.id}')
-            return JsonResponse({'id': record.id, 'status': record.status, 'passed': passed, 'total': len(cases), 'details': details})
+            try:
+                judge_submission.apply_async((record.id,), expires=QUEUE_EXPIRES)
+            except Exception:
+                CodeSubmission.objects.filter(pk=record.pk, status='running').update(status='service_error')
+                raise
+            record.refresh_from_db()
+            return JsonResponse(submission_payload(record), status=202 if record.status == 'running' else 200)
         # Practice execution never changes grades and uses only the student's own stdin.
-        return JsonResponse(run_python(code, [stdin])[0])
-    except Exception:
-        if record:
-            record.status = 'service_error'
-            record.save(update_fields=['status'])
-        raise
+        token = secrets.token_urlsafe(16)
+        # One queued practice run per user, so nobody can fill the shared queue.
+        if not cache.add(practice_busy_key(request.user.id), token, QUEUE_EXPIRES + 30):
+            raise ApiError('Предыдущий запуск ещё выполняется. Дождитесь результата.', 429)
+        cache.set(practice_key(token), {'user': request.user.id}, PRACTICE_TTL)
+        practice_run.apply_async((token, request.user.id, code, stdin), expires=QUEUE_EXPIRES)
+        entry = cache.get(practice_key(token)) or {}
+        if 'result' in entry or 'error' in entry:
+            return JsonResponse(practice_payload(entry))
+        return JsonResponse({'status': 'running', 'run_token': token}, status=202)
     finally:
-        CAPACITY.release()
+        if inline:
+            CAPACITY.release()
+
+
+@require_GET
+@api
+def submission_status(request, submission_id):
+    authenticated(request)
+    submissions = CodeSubmission.objects.filter(pk=submission_id, enrollment__student=request.user)
+    expire_stale(submissions)
+    return JsonResponse(submission_payload(get_object_or_404(submissions)))
+
+
+@require_GET
+@api
+def practice_status(request, token):
+    authenticated(request)
+    entry = cache.get(practice_key(token))
+    if not entry or entry.get('user') != request.user.id:
+        raise ApiError('Результат запуска не найден или устарел', 404)
+    return JsonResponse(practice_payload(entry))

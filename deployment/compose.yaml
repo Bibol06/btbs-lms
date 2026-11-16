@@ -1,8 +1,29 @@
 name: btbs-local
+
+# Settings shared by the web server and the Celery processes (same image, same code).
+x-app: &app
+  image: btbs-local-web
+  env_file: ../backend/.env
+  extra_hosts: ["host.docker.internal:host-gateway"]
+  restart: unless-stopped
+  depends_on:
+    redis:
+      condition: service_healthy
+
+x-app-env: &app-env
+  DJANGO_SETTINGS_MODULE: config.container_settings
+  DB_HOST: host.docker.internal
+  LMS_REDIS_URL: redis://redis:6379/1
+  LMS_CELERY_BROKER_URL: redis://redis:6379/2
+  LMS_CODE_RUNTIME: /run/code-runtime/python-3.12.0.wasm
+
 services:
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+    # volatile-lru evicts only cache keys (they all expire); Celery queue keys have
+    # no TTL and must never be evicted. Not persisted: after a Redis restart queued
+    # code checks are reported as service errors and do not use up an attempt.
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "volatile-lru", "--save", "", "--appendonly", "no"]
     ports: ["127.0.0.1:6379:6379"]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -12,31 +33,25 @@ services:
     mem_limit: 192m
     restart: unless-stopped
   web:
+    <<: *app
     build:
       context: ..
       dockerfile: deployment/Dockerfile
-    env_file: ../backend/.env
     environment:
-      DJANGO_SETTINGS_MODULE: config.container_settings
-      DB_HOST: host.docker.internal
-      LMS_REDIS_URL: redis://redis:6379/1
+      <<: *app-env
       MEDIA_CDN_PRIVATE_KEY_FILE: /run/cdn/signing-key.pem
       LMS_BACKUP_DIR: /app-state/backups
       LMS_BACKUP_KEY_FILE: /run/backup-keys/main.key
-      # 768 MB limit: 4 processes x 4 threads. Code checks are limited per process,
-      # so 1 slot per process keeps at most 4 student programs running at once.
+      # 768 MB limit: 4 processes x 4 threads. Code checks run in worker-judge, so the
+      # web process only queues them and answers polls.
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-4}
       GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
-      LMS_CODEJUDGE_SLOTS: '1'
-    extra_hosts: ["host.docker.internal:host-gateway"]
     volumes:
       - ../backend/media:/app/media
       - ../.local/cdn:/run/cdn:ro
       - ../.local/backups/scheduled:/app-state/backups
       - ../.local/backup-keys:/run/backup-keys:ro
-    depends_on:
-      redis:
-        condition: service_healthy
+      - ../.local/runtime:/run/code-runtime:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health/', timeout=4).status == 200 else 1)"]
       interval: 30s
@@ -44,7 +59,37 @@ services:
       start_period: 20s
       retries: 3
     mem_limit: 768m
-    restart: unless-stopped
+  # Student code checks. Each check also starts a sandbox process (wasmtime), so the
+  # concurrency here is the number of programs that may run at the same time.
+  worker-judge:
+    <<: *app
+    environment:
+      <<: *app-env
+    command: ["celery", "-A", "config", "worker", "-Q", "judge", "-c", "2", "-n", "judge@%h", "--without-gossip", "--without-mingle", "-l", "INFO"]
+    volumes:
+      - ../.local/runtime:/run/code-runtime:ro
+    mem_limit: 640m
+  # Periodic jobs: quiz time-outs, deadline reminders, recovery mail, progress
+  # snapshots, media cleanup. Backups stay in Windows Task Scheduler (pg_dump 18
+  # is installed on the host, not in this image).
+  worker:
+    <<: *app
+    environment:
+      <<: *app-env
+      MEDIA_CDN_PRIVATE_KEY_FILE: /run/cdn/signing-key.pem
+    command: ["celery", "-A", "config", "worker", "-Q", "celery", "-c", "2", "-n", "default@%h", "--without-gossip", "--without-mingle", "-l", "WARNING"]
+    volumes:
+      - ../backend/media:/app/media
+      - ../.local/cdn:/run/cdn:ro
+    mem_limit: 512m
+  # Exactly one beat process: it only enqueues the schedule from config/settings.py.
+  # Periodic runs log only warnings and errors (they fire every 15-60 s).
+  beat:
+    <<: *app
+    environment:
+      <<: *app-env
+    command: ["celery", "-A", "config", "beat", "-s", "/tmp/celerybeat-schedule", "-l", "WARNING"]
+    mem_limit: 192m
   nginx:
     build:
       context: ..

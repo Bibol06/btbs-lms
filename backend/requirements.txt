@@ -7,3 +7,4 @@ Pillow>=12.3,<13
 django-storages[s3]>=1.14.6,<2
 cryptography>=46,<47
 sentry-sdk[django]>=2.20,<3
+celery[redis]>=5.7,<6

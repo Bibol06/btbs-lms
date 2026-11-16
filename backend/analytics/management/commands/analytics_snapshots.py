@@ -1,9 +1,7 @@
 import time
 from django.core.management.base import BaseCommand
 from django.db import close_old_connections
-from courses.models import Enrollment
-from analytics.models import TrackingCoverage
-from analytics.tracking import capture_progress
+from analytics.tasks import capture_all_progress
 
 
 class Command(BaseCommand):
@@ -14,18 +12,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         while True:
-            TrackingCoverage.objects.get_or_create(pk=1)
-            count = 0
-            queryset = Enrollment.objects.select_related('course', 'run').order_by('id')
-            last = 0
-            while True:
-                rows = list(queryset.filter(id__gt=last)[:100])
-                if not rows:
-                    break
-                for enrollment in rows:
-                    capture_progress(enrollment, None)
-                    count += 1
-                last = rows[-1].id
+            count = capture_all_progress()
             self.stdout.write(f'Current progress observed for {count} enrollments')
             if not options['loop']:
                 break

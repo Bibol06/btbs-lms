@@ -268,3 +268,25 @@ CACHES = {'default': {
     'KEY_PREFIX': 'btbs',
     'OPTIONS': {'socket_connect_timeout': 0.3, 'socket_timeout': 0.3} if LMS_REDIS_URL else {'MAX_ENTRIES': 1000},
 }}
+
+# Background tasks. With a broker, code checks and periodic jobs run in Celery
+# workers/beat (deployment/compose.yaml). Without one, tasks run inline in the
+# request, which keeps Windows development and tests free of extra services.
+CELERY_BROKER_URL = os.getenv('LMS_CELERY_BROKER_URL', '')
+CELERY_TASK_ALWAYS_EAGER = not CELERY_BROKER_URL
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_TASK_IGNORE_RESULT = True  # results go to the database or cache, not a result backend
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+CELERY_TASK_ROUTES = {'codejudge.tasks.*': {'queue': 'judge'}}
+# 'expires' drops runs that queued up while workers were down instead of replaying them all.
+CELERY_BEAT_SCHEDULE = {
+    # Former notification_worker loop: close expired quiz attempts, deadline reminders.
+    'deadlines': {'task': 'communication.tasks.deadline_pass', 'schedule': 30.0, 'options': {'expires': 30.0}},
+    # Former maintenance_worker loop: password-recovery mail.
+    'recovery-mail': {'task': 'accounts.tasks.deliver_recovery_mail', 'schedule': 15.0, 'options': {'expires': 15.0}},
+    # Former analytics_snapshots --loop.
+    'progress-snapshots': {'task': 'analytics.tasks.capture_progress_snapshots', 'schedule': 60.0, 'options': {'expires': 60.0}},
+    'media-cleanup': {'task': 'learning.tasks.cleanup_media_uploads', 'schedule': 3600.0, 'options': {'expires': 3600.0}},
+}

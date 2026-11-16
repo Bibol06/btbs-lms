@@ -8,7 +8,9 @@ from common import ApiError
 
 
 def runtime_path():
-    return Path(settings.BASE_DIR).parent / '.local/runtime/python-3.12.0.wasm'
+    # Containers mount the verified runtime read-only and point LMS_CODE_RUNTIME at it.
+    configured = os.getenv('LMS_CODE_RUNTIME')
+    return Path(configured) if configured else Path(settings.BASE_DIR).parent / '.local/runtime/python-3.12.0.wasm'
 
 
 def run_python(code, cases):

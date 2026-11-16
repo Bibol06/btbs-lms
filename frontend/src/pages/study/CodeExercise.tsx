@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { apiRequest } from '../../api'
 import { errorMessage } from './types'
 
-type Result = { status: string; stdout?: string; stderr?: string; passed?: number; total?: number; details?: { sample: boolean; status: string; stdout?: string; stderr?: string }[] }
+type Result = { id?: number; run_token?: string; status: string; stdout?: string; stderr?: string; passed?: number; total?: number; details?: { sample: boolean; status: string; stdout?: string; stderr?: string }[] }
 type ProblemData = { problem: { id: number; title: string; statement: string; starter_code: string; max_attempts: number; samples: { stdin: string; expected: string }[] }; submissions: { id: number; status: string; passed: number; total: number }[]; attempts_used: number; available: boolean; can_manage: boolean; can_submit: boolean; draft_key: string; editor: { can_edit: boolean; test_cases: { stdin: string; expected: string; is_sample: boolean }[] } | null }
 const statuses: Record<string, string> = localizedLabels({ ok: 'Выполнено', accepted: 'Принято', rejected: 'Есть ошибки', wrong_answer: 'Неверный ответ', runtime_error: 'Ошибка выполнения', limit_exceeded: 'Превышен лимит вычислений или памяти', output_limit: 'Слишком большой вывод', time_limit: 'Превышено время', running: 'Проверяется', service_error: 'Ошибка сервиса' })
 
@@ -42,7 +42,15 @@ export default function CodeExercise({ problemId, runId, onCompleted }: { proble
   async function execute(submit: boolean) {
     setBusy(true); setError(''); setResult(null)
     try {
-      const value = await apiRequest<Result>(`/api/code/problems/${problemId}/execute/?run_id=${runId}`, 'POST', { code, stdin, submit })
+      let value = await apiRequest<Result>(`/api/code/problems/${problemId}/execute/?run_id=${runId}`, 'POST', { code, stdin, submit })
+      // The server queues the check (status "running"); poll until the verdict is ready.
+      const poll = value.run_token ? `/api/code/runs/${value.run_token}/` : `/api/code/submissions/${value.id}/`
+      for (let wait = 0; value.status === 'running' && wait < 150; wait++) {
+        setResult(value)
+        await new Promise(resolve => window.setTimeout(resolve, wait < 10 ? 500 : 1000))
+        value = await apiRequest<Result>(poll)
+      }
+      if (value.status === 'running') throw new Error(tr("Проверка заняла слишком много времени. Обновите страницу позже."))
       setResult(value)
       if (submit) { setRevision(v => v + 1); if (value.status === 'accepted') onCompleted() }
     } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
