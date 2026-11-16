@@ -23,6 +23,11 @@ services:
       MEDIA_CDN_PRIVATE_KEY_FILE: /run/cdn/signing-key.pem
       LMS_BACKUP_DIR: /app-state/backups
       LMS_BACKUP_KEY_FILE: /run/backup-keys/main.key
+      # 768 MB limit: 4 processes x 4 threads. Code checks are limited per process,
+      # so 1 slot per process keeps at most 4 student programs running at once.
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-4}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+      LMS_CODEJUDGE_SLOTS: '1'
     extra_hosts: ["host.docker.internal:host-gateway"]
     volumes:
       - ../backend/media:/app/media

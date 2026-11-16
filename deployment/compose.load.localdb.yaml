@@ -1,0 +1,32 @@
+# Optional overlay: run the load test against PostgreSQL in Docker next to the app,
+# instead of the Windows PostgreSQL reached via host.docker.internal.
+#   docker compose -f deployment/compose.load.yaml -f deployment/compose.load.localdb.yaml up -d
+# Data lives in tmpfs and disappears with the container; no port is published.
+# The credentials below exist only inside this throwaway benchmark network.
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: bench-only-not-secret
+      POSTGRES_DB: bench
+    tmpfs:
+      - /var/lib/postgresql:size=1g
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "bench", "-d", "bench"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    mem_limit: 768m
+  probe:
+    environment:
+      DB_HOST: db
+      DB_PORT: '5432'
+      DB_NAME: bench
+      DB_USER: bench
+      DB_PASSWORD: bench-only-not-secret
+    depends_on:
+      cache:
+        condition: service_started
+      db:
+        condition: service_healthy

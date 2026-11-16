@@ -1,4 +1,5 @@
 import threading
+from django.conf import settings
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -14,7 +15,7 @@ from learning.services import require_activity_visible, refresh_completion
 from .models import CodeProblem, TestCase, CodeSubmission
 from .runner import run_python, runtime_path
 
-CAPACITY = threading.BoundedSemaphore(2)
+CAPACITY = threading.BoundedSemaphore(settings.LMS_CODEJUDGE_SLOTS)
 
 
 @require_http_methods(['GET', 'POST'])

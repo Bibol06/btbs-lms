@@ -66,7 +66,7 @@ jobs:
       - name: Dependency vulnerability audit
         # Report only for now; make it blocking once dependencies are pinned in a lock file.
         continue-on-error: true
-        run: pip-audit -r requirements.txt
+        run: pip-audit -r requirements.txt -r requirements-server.txt
 
   frontend:
     runs-on: ubuntu-24.04

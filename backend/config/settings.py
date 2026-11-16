@@ -216,6 +216,8 @@ LMS_BACKUP_DIR = Path(os.getenv('LMS_BACKUP_DIR', str(BASE_DIR.parent / '.local'
 LMS_BACKUP_KEY_FILE = Path(os.getenv('LMS_BACKUP_KEY_FILE', str(BASE_DIR.parent / '.local' / 'backup-keys' / 'main.key')))
 LMS_BACKUP_KEEP = max(1, int(os.getenv('LMS_BACKUP_KEEP', '7')))
 LMS_BACKUP_HOUR = int(os.getenv('LMS_BACKUP_HOUR', '3'))
+# Concurrent code checks per server process (Gunicorn multiplies this by its worker count).
+LMS_CODEJUDGE_SLOTS = max(1, min(8, int(os.getenv('LMS_CODEJUDGE_SLOTS', '2'))))
 LMS_PG_BIN = os.getenv('LMS_PG_BIN', '')
 LMS_BACKUP_S3_BUCKET = os.getenv('LMS_BACKUP_S3_BUCKET', '').strip()
 LMS_BACKUP_S3_REGION = os.getenv('LMS_BACKUP_S3_REGION', 'eu-north-1')

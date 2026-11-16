@@ -17,6 +17,8 @@ services:
       LOAD_SECONDS: '30'
       LOAD_THREADS: ${BENCH_THREADS:-8}
       LOAD_ACTIVITIES: ${BENCH_ACTIVITIES:-0}
+      LOAD_SERVER: ${BENCH_SERVER:-waitress}
+      LOAD_WORKERS: ${BENCH_WORKERS:-4}
       LOAD_REPORT_DIR: /reports
       PYTHONDONTWRITEBYTECODE: '1'
     volumes:

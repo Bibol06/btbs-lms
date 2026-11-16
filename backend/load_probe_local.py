@@ -11,19 +11,16 @@ from django.conf import settings
 from django.db import connection, connections
 from django.test import Client
 from django.core.wsgi import get_wsgi_application
-from waitress import create_server
-settings.DEBUG = False
-settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
-settings.MEDIA_STORAGE_MODE = 'local'
-settings.ALLOWED_HOSTS = ['127.0.0.1', 'testserver', 'proxy']
+from load_bench_app import apply_overrides, timed
 logging.disable(logging.CRITICAL)
 original = connection.settings_dict['NAME']
 test_name = 'test_btbs_load_' + time.strftime('%Y%m%d%H%M%S')
-settings.CACHES['default']['KEY_PREFIX'] = test_name
+apply_overrides(test_name)
 connection.settings_dict['TEST']['NAME'] = test_name
 disk_root = os.getenv('LOAD_REPORT_DIR', 'C:/' if os.name == 'nt' else '/tmp')
 report = {'database': test_name, 'free_before': shutil.disk_usage(disk_root).free, 'stages': []}
 server = None
+gunicorn = None
 created = False
 stages = tuple(int(n) for n in os.getenv('LOAD_STAGES', '1,5,20,50,100').split(','))
 assert stages and all(1 <= n <= 100 for n in stages)
@@ -97,30 +94,24 @@ try:
         with (Path(disk_root) / (test_name + '-profile.txt')).open('w') as output:
             pstats.Stats(profiler, stream=output).strip_dirs().sort_stats('cumulative').print_stats(45)
     connections.close_all()
-    app = get_wsgi_application()
-    def timed_app(environ, start_response):
-        started = time.perf_counter()
-        sql = [0., 0]
-        def measure(execute, statement, params, many, context):
-            began = time.perf_counter()
-            try:
-                return execute(statement, params, many, context)
-            finally:
-                sql[0] += time.perf_counter() - began
-                sql[1] += 1
-        def headers(status, response_headers, exc_info=None):
-            response_headers += [('X-Bench-App-Ms', str((time.perf_counter()-started)*1000)),
-                                 ('X-Bench-Sql-Ms', str(sql[0]*1000))]
-            return start_response(status, response_headers, exc_info)
-        with connection.execute_wrapper(measure):
-            return app(environ, headers)
     threads = int(os.getenv('LOAD_THREADS', '8'))
     assert 1 <= threads <= 32
     report['server_threads'] = threads
-    server = create_server(timed_app, host=os.getenv('LOAD_BIND', '127.0.0.1'), port=18765, threads=threads)
-    threading.Thread(target=server.run, daemon=True).start()
-    # Generator has its own interpreter: it cannot contend for the server GIL.
     import subprocess, sys
+    if os.getenv('LOAD_SERVER') == 'gunicorn':
+        # Same gunicorn.conf.py as the container; only the app, port and pool sizes differ.
+        workers = int(os.getenv('LOAD_WORKERS', '4'))
+        assert 1 <= workers <= 16
+        report['server'] = f'gunicorn gthread {workers}x{threads}'
+        gunicorn = subprocess.Popen([sys.executable, '-m', 'gunicorn', '--bind', f"{os.getenv('LOAD_BIND', '127.0.0.1')}:18765",
+            '--workers', str(workers), '--threads', str(threads), 'load_bench_wsgi:application'],
+            cwd=Path(__file__).parent, env={**os.environ, 'LOAD_DB_NAME': test_name})
+    else:
+        from waitress import create_server
+        report['server'] = f'waitress {threads} threads'
+        server = create_server(timed(get_wsgi_application()), host=os.getenv('LOAD_BIND', '127.0.0.1'), port=18765, threads=threads)
+        threading.Thread(target=server.run, daemon=True).start()
+    # Generator has its own interpreter: it cannot contend for the server GIL.
     generated = subprocess.run([sys.executable, str(Path(__file__).with_name('load_http_worker.py'))],
         input=json.dumps({'cookies': cookies, 'paths': paths, 'stages': [] if os.getenv('LOAD_PROFILE_ONLY') else stages,
             'seconds': int(os.getenv('LOAD_SECONDS', '15')), 'disk_root': disk_root,
@@ -134,6 +125,12 @@ try:
 finally:
     if server:
         server.close(); server.task_dispatcher.shutdown()
+    if gunicorn:
+        gunicorn.terminate()
+        try:
+            gunicorn.wait(timeout=40)
+        except Exception:
+            gunicorn.kill()
     connections.close_all()
     if created:
         # Waitress thread-local persistent connections can outlive dispatcher shutdown.

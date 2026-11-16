@@ -1,0 +1,3 @@
+-r requirements.txt
+# Linux container only; Windows sharing mode keeps Waitress (requirements-share.txt).
+gunicorn>=27.0.1,<28; sys_platform != "win32"
