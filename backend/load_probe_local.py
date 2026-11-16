@@ -1,5 +1,5 @@
 """Bounded local HTTP read-load probe; disposable PostgreSQL database only."""
-import os, time, json, shutil, threading, urllib.request, concurrent.futures, logging
+import os, time, json, shutil, threading, logging
 from pathlib import Path
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 import django

@@ -4,13 +4,13 @@ from django.core.validators import URLValidator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.views.decorators.http import require_POST, require_http_methods
 
 from common import api, authenticated, body, text, integer, boolean, date, ApiError
 from courses.models import Course, Enrollment
 from courses.access import can_manage_course, can_manage_run, resolve_run, require_run, require_learning_enrollment
 from .models import Module, Lesson, Step, StepProgress
-from .services import require_lesson_visible, visible_steps, step_completed, course_progress, refresh_completion, with_step_progress
+from .services import require_lesson_visible, step_completed, course_progress, refresh_completion, with_step_progress
 
 
 def content_editor(request, course):
@@ -247,7 +247,7 @@ def reorder(request, course_id):
     if kind == 'modules':
         qs = course.modules.all()
     elif kind == 'lessons':
-        module = get_object_or_404(Module, pk=integer(data, 'parent_id', 1, 2**63-1), course=course)
+        get_object_or_404(Module, pk=integer(data, 'parent_id', 1, 2**63-1), course=course)  # parent must belong to this course
         # Lesson positions remain course-wide for compatibility; order all lessons together.
         qs = course.lessons.all()
     elif kind == 'steps':

@@ -6,7 +6,7 @@ from django.utils import timezone
 from courses.models import Course, CourseRun, Enrollment, default_run
 from learning.models import Module, Lesson, Step, StepProgress
 from assessment.models import Assignment, Quiz, Question, Submission, QuizAttempt, ActivitySchedule
-from .models import Announcement, Notification, Event, Conversation, Participant, Message, Comment
+from .models import Notification, Event, Comment
 from .services import notify
 
 

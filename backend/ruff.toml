@@ -1,0 +1,8 @@
+# Start strict only on real bugs (syntax errors, undefined names, unused code).
+# Widen "select" step by step (e.g. "B", "UP", "I") once the codebase is clean.
+target-version = "py313"
+line-length = 160
+extend-exclude = ["migrations", ".venv"]
+
+[lint]
+select = ["E9", "F"]

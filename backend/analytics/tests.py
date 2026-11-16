@@ -1,10 +1,9 @@
 from datetime import timedelta, datetime
-from unittest.mock import patch
 from zoneinfo import ZoneInfo
 import json
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.utils import timezone
 
 from assessment.models import Assignment, Submission, Quiz, Question, QuizAttempt, GradeReview

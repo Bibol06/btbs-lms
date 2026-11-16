@@ -1,4 +1,4 @@
-from django.db.models import Q, Count
+from django.db.models import Count
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from django.utils import timezone

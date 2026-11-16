@@ -1,5 +1,4 @@
 from datetime import timedelta
-from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
@@ -8,8 +7,8 @@ from learning.models import Module, Lesson, Step, StepProgress
 from assessment.models import Assignment, Submission, Quiz, Question, QuizAttempt, GradeReview
 from communication.models import Discussion, Comment
 from analytics.models import ActivityEvent, AttendanceDay, ProgressSnapshot, TrackingCoverage
-from codejudge.models import CodeProblem, CodeSubmission, TestCase as CodeCase
-from .models import AssignmentRubric, LessonPulse, BankQuestion
+from codejudge.models import CodeSubmission
+from .models import LessonPulse, BankQuestion
 
 
 class WorkspaceTests(TestCase):

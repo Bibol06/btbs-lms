@@ -6,3 +6,7 @@ os.environ['LMS_BACKUP_S3_BUCKET'] = ''
 from .settings import *  # noqa: F403
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 MEDIA_CDN_DOMAIN = ''
+# Keep test output readable: only errors from the app loggers.
+LOGGING['root']['level'] = 'ERROR'  # noqa: F405
+for _name in ('django', 'security'):
+    LOGGING['loggers'][_name]['level'] = 'ERROR'  # noqa: F405

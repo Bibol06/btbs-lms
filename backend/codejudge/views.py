@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.views.decorators.http import require_POST, require_http_methods
 
 from common import api, body, text, raw_text, integer, boolean, ApiError
 from courses.models import Course

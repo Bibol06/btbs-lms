@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.views.decorators.http import require_POST, require_http_methods
 
 from common import api, authenticated, body, text, boolean, date, ApiError
 from .access import can_manage_course, can_manage_run, require_run

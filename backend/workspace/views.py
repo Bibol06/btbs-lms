@@ -3,10 +3,10 @@ from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
-from common import api, authenticated, body, text, integer, boolean, ApiError, query_integer
+from common import api, authenticated, body, text, integer, ApiError, query_integer
 from accounts.identity import display_name
 from courses.access import require_run, resolve_run, require_learning_enrollment, can_manage_course, can_manage_run
-from courses.models import Course, CourseRun, Enrollment
+from courses.models import Course, Enrollment
 from learning.models import Lesson
 from learning.services import require_lesson_visible
 from assessment.models import Assignment, Submission

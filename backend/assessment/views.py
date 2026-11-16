@@ -4,13 +4,13 @@ from datetime import timedelta
 from pathlib import Path
 
 from django.db import transaction
-from django.http import FileResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from common import api, authenticated, body, text, integer, boolean, date, ApiError
-from courses.access import can_access_full_content, can_manage_course, can_manage_run, resolve_run, require_run, require_learning_enrollment
+from courses.access import can_manage_course, can_manage_run, resolve_run, require_run, require_learning_enrollment
 from courses.models import Course, Enrollment
 from learning.models import Lesson
 from learning.upload_views import valid_file_signature

@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import DatabaseError, transaction
 from django.utils import timezone
 
-from courses.access import can_manage_run, can_teach, is_platform_admin
+from courses.access import can_manage_run, can_teach
 from .models import ActivityEvent, AttendanceDay, ProgressSnapshot, SessionRecord
 
 logger = logging.getLogger(__name__)

@@ -113,7 +113,7 @@ def learning_plan(request, run_id):
             raise ApiError('Выберите недельный тест или контроль за 4 недели')
         quiz_id = integer(item, 'quiz_id', 1, 2**63-1)
         period = integer(item, 'period', 1, 130 if item['kind'] == 'monthly' else 520)
-        quiz = get_object_or_404(Quiz, id=quiz_id, course=run.course)
+        get_object_or_404(Quiz, id=quiz_id, course=run.course)  # the quiz must belong to this course
         if quiz_id in seen_quizzes or (item['kind'], period) in seen_periods:
             raise ApiError('Для каждого периода нужен отдельный тест')
         seen_quizzes.add(quiz_id); seen_periods.add((item['kind'], period))

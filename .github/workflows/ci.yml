@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        # 16 matches the pg_dump client preinstalled on ubuntu-24.04 (used by the backup tests).
+        image: postgres:16
+        env:
+          POSTGRES_USER: lms
+          POSTGRES_PASSWORD: lms-ci-password
+          POSTGRES_DB: lms
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U lms"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DJANGO_SECRET_KEY: ci-only-not-a-real-secret-0123456789abcdefghijklmnop
+      DJANGO_DEBUG: "False"
+      DB_NAME: lms
+      DB_USER: lms
+      DB_PASSWORD: lms-ci-password
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      LMS_LOG_FORMAT: text
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Lint (ruff)
+        run: ruff check .
+      - name: Django system checks
+        run: python manage.py check
+      - name: Deploy checklist (HTTPS-only warnings are expected until a server exists)
+        run: python manage.py check --deploy --fail-level ERROR
+      - name: Migrations are committed
+        run: python manage.py makemigrations --check --dry-run
+      - name: Download the WASM Python runtime (enables sandbox tests)
+        run: python manage.py setup_code_runner
+      - name: Tests
+        run: python manage.py test --settings=config.test_settings --noinput
+      - name: Dependency vulnerability audit
+        # Report only for now; make it blocking once dependencies are pinned in a lock file.
+        continue-on-error: true
+        run: pip-audit -r requirements.txt
+
+  frontend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - name: Dependency vulnerability audit
+        continue-on-error: true
+        run: npm audit --audit-level=high

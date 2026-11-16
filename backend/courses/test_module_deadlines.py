@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 from assessment.models import Assignment, Submission, Quiz, Question, QuizAttempt
 from learning.models import Module, Lesson, Step, StepProgress, LessonMaterial
-from .models import Course, CourseRun, Enrollment, RunModuleRelease, RunCheckpoint
+from .models import Course, CourseRun, Enrollment, RunCheckpoint
 
 
 class ModuleDeadlineTests(TestCase):

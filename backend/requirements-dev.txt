@@ -1,0 +1,4 @@
+-r requirements.txt
+-r requirements-cache.txt
+ruff>=0.14,<1
+pip-audit>=2.7,<3

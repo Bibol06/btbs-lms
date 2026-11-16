@@ -1,11 +1,10 @@
-from datetime import timedelta
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 from common import api, authenticated, body, text, integer, boolean, raw_text, ApiError, query_integer
-from courses.models import Course, CourseRun, CourseImage, default_run
+from courses.models import Course, CourseImage, default_run
 from courses.access import can_manage_course, require_run, resolve_run
 from learning.models import Module, Lesson, Step, LessonMaterial
 from assessment.models import Assignment, Quiz, Question

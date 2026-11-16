@@ -4,7 +4,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from django.db import transaction
-from django.http import FileResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_POST
 

@@ -32,6 +32,12 @@ services:
     depends_on:
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health/', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
     mem_limit: 768m
     restart: unless-stopped
   nginx:
@@ -39,6 +45,8 @@ services:
       context: ..
       dockerfile: deployment/nginx.Dockerfile
     ports: ["127.0.0.1:8080:80"]
-    depends_on: [web]
+    depends_on:
+      web:
+        condition: service_healthy
     mem_limit: 128m
     restart: unless-stopped

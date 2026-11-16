@@ -3,7 +3,6 @@ import json
 import os
 import urllib.error
 import urllib.request
-from pathlib import Path
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 import django

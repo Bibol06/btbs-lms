@@ -14,7 +14,7 @@ from courses.access import require_run, resolve_run, is_platform_admin
 from courses.models import CourseRun, Enrollment
 from learning.services import require_activity_visible
 from .models import Assignment, Submission, QuizAttempt
-from .deadlines import submission_window, assignment_settings, grant_extension, review_state
+from .deadlines import submission_window, grant_extension, review_state
 from .quiz_services import finalize_due_attempts
 
 

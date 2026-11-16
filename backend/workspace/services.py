@@ -3,7 +3,7 @@ from django.db.models import Q, F, Max
 from django.utils import timezone
 from accounts.identity import display_name
 from common import ApiError
-from courses.access import can_manage_course, can_teach, is_platform_admin
+from courses.access import can_teach, is_platform_admin
 from courses.models import Course, Enrollment
 from assessment.deadline_views import managed_runs, student_tasks, pending_reviews, review_item
 from communication.models import Comment

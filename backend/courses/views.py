@@ -1,5 +1,5 @@
 from accounts.identity import display_name, role_label
-from django.db.models import Count, Exists, OuterRef, Q, Value
+from django.db.models import Exists, OuterRef, Q, Value
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import ensure_csrf_cookie

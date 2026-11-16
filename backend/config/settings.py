@@ -220,6 +220,42 @@ LMS_PG_BIN = os.getenv('LMS_PG_BIN', '')
 LMS_BACKUP_S3_BUCKET = os.getenv('LMS_BACKUP_S3_BUCKET', '').strip()
 LMS_BACKUP_S3_REGION = os.getenv('LMS_BACKUP_S3_REGION', 'eu-north-1')
 
+# Logging: JSON lines to stdout (docker logs / any collector). LMS_LOG_FORMAT=text for local reading.
+LMS_LOG_LEVEL = os.getenv('LMS_LOG_LEVEL', 'INFO').upper()
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'json': {'()': 'log_format.JsonFormatter'},
+        'text': {'format': '%(asctime)s %(levelname)s %(name)s: %(message)s'},
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler',
+                    'formatter': 'text' if os.getenv('LMS_LOG_FORMAT', 'json') == 'text' else 'json'},
+    },
+    'root': {'handlers': ['console'], 'level': LMS_LOG_LEVEL},
+    'loggers': {
+        'django': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        # 4xx are normal API answers; 5xx are logged as errors by django.request.
+        'django.request': {'handlers': ['console'], 'level': 'ERROR', 'propagate': False},
+        'django.db.backends': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'security': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'botocore': {'level': 'WARNING'},
+        'urllib3': {'level': 'WARNING'},
+    },
+}
+
+# Error tracking: enabled only when SENTRY_DSN is set. No personal data is sent.
+SENTRY_DSN = os.getenv('SENTRY_DSN', '').strip()
+if SENTRY_DSN:
+    import sentry_sdk
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.getenv('SENTRY_ENVIRONMENT', 'production'),
+        send_default_pii=False,
+        traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.05')),
+    )
+
 # Optional shared cache. No permissions, sessions or grades are cached here.
 LMS_REDIS_URL = os.getenv('LMS_REDIS_URL', '')
 CACHES = {'default': {

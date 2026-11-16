@@ -3,13 +3,13 @@ from pathlib import Path
 from django.core.validators import URLValidator
 from django.db import transaction
 from django.db.models import Max
-from django.http import FileResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from common import api, authenticated, body, text, boolean, ApiError
-from courses.access import can_access_full_content, can_manage_course, is_enrolled, resolve_run, can_manage_run, require_run
+from courses.access import can_manage_course, is_enrolled, resolve_run, can_manage_run, require_run
 from courses.models import Course
 from .models import Lesson, LessonMaterial
 

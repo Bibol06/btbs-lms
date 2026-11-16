@@ -12,7 +12,7 @@ from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase, override_settings
 
 from common import ApiError
-from courses.models import Course, CourseImage, CourseRun, Enrollment
+from courses.models import Course, CourseImage, Enrollment
 from assessment.models import Assignment, Submission
 from learning.models import Lesson, LessonMaterial
 from media_paths import course_media_upload_to, media_directory

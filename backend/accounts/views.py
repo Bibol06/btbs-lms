@@ -12,8 +12,9 @@ from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from courses.access import is_platform_admin, can_teach
+from courses.access import can_teach
 from .permissions import is_system_admin, access_data
+from . import login_guard
 
 
 @require_GET
@@ -40,6 +41,9 @@ def login_view(request):
     identifier = username.strip()
     if not identifier:
         return JsonResponse({'error': 'Введите логин и пароль'}, status=400)
+    client_ip = request.META.get('REMOTE_ADDR', '')
+    if login_guard.is_locked(identifier, client_ip):
+        return JsonResponse({'error': login_guard.LOCKED_MESSAGE}, status=429)
     User = get_user_model()
     candidates = list(User.objects.filter(
         Q(username__iexact=identifier) | Q(email__iexact=identifier)
@@ -52,11 +56,13 @@ def login_view(request):
         user = None
 
     if user is None:
+        login_guard.register_failure(identifier, client_ip)
         return JsonResponse(
             {"error": "Неверный логин или пароль"},
             status=401
         )
 
+    login_guard.register_success(identifier, client_ip)
     login(request, user)
 
     return JsonResponse({

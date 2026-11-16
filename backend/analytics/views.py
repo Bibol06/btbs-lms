@@ -3,7 +3,6 @@ import io
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
@@ -13,7 +12,7 @@ from django.views.decorators.http import require_GET, require_POST, require_http
 from accounts.identity import identity_data
 from assessment.models import Quiz, Submission, QuizAttempt
 from common import api, authenticated, body, integer, query_integer, ApiError
-from courses.access import is_platform_admin, require_run
+from courses.access import require_run
 from courses.models import CourseRun
 from learning.models import Lesson
 from .models import ActivityEvent, AttendanceDay, SessionRecord, LessonEvaluation
