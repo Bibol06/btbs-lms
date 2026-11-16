@@ -2,7 +2,10 @@
 import os, time, json, shutil, threading, logging
 from pathlib import Path
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+# Synthetic load must never report to the real error tracker (load_dotenv does not override this).
+os.environ['SENTRY_DSN'] = ''
 import django
+import django.utils.timezone
 django.setup()
 from django.conf import settings
 from django.db import connection, connections
@@ -31,7 +34,14 @@ try:
     from accounts.models import User
     from courses.models import Course, CourseRun, Enrollment
     from learning.models import Module, Lesson, Step
-    courses = []
+    # LOAD_ACTIVITIES=1 adds a quiz and an assignment step to every lesson plus a
+    # checkpoint quiz per course, and gives every student a finished attempt and a
+    # graded submission, so dashboard/deadline code paths are exercised.
+    activities = os.getenv('LOAD_ACTIVITIES') == '1'
+    report['activities'] = activities
+    from assessment.models import Quiz, Assignment, QuizAttempt, Submission
+    from courses.models import RunCheckpoint
+    courses, first_activity = [], {}
     for n in range(10):
         c = Course.objects.create(title=f'Load course {n}', is_published=True)
         r = CourseRun.objects.create(course=c)
@@ -39,11 +49,25 @@ try:
         for j in range(10):
             l = Lesson.objects.create(course=c, module=m, title=f'Lesson {j}', position=j+1, is_published=True)
             Step.objects.create(lesson=l, title='Text', content='Learning content. '*100, is_published=True)
+            if activities:
+                q = Quiz.objects.create(course=c, title=f'Quiz {j}', is_published=True)
+                a = Assignment.objects.create(course=c, title=f'Task {j}', is_published=True)
+                Step.objects.create(lesson=l, title='Quiz', kind='quiz', quiz=q, position=2, is_published=True)
+                Step.objects.create(lesson=l, title='Task', kind='assignment', assignment=a, position=3, is_published=True)
+                first_activity.setdefault(c.pk, (q, a))
+        if activities:
+            RunCheckpoint.objects.create(run=r, kind='weekly', period=1,
+                                         quiz=Quiz.objects.create(course=c, title='Checkpoint', is_published=True))
         courses.append((c,r))
     cookies = []
     for n in range(max(stages)):
         u = User.objects.create(username=f'load_student_{n}', role='student', password='!')
-        Enrollment.objects.bulk_create([Enrollment(student=u,course=c,run=r) for c,r in courses])
+        enrollments = Enrollment.objects.bulk_create([Enrollment(student=u,course=c,run=r) for c,r in courses])
+        if activities:
+            QuizAttempt.objects.bulk_create([QuizAttempt(enrollment=e, student=u, quiz=first_activity[e.course_id][0], attempt_no=1,
+                deadline_at=django.utils.timezone.now(), status='finished', score=4, max_score=5) for e in enrollments])
+            Submission.objects.bulk_create([Submission(enrollment=e, student=u, assignment=first_activity[e.course_id][1],
+                attempt_no=1, status='graded', score=80) for e in enrollments])
         client = Client(); client.force_login(u)
         cookies.append('sessionid=' + client.cookies['sessionid'].value)
     c,r = courses[0]
