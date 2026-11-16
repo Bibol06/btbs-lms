@@ -245,7 +245,7 @@ LOGGING = {
     },
 }
 
-# Error tracking: enabled only when SENTRY_DSN is set. No personal data is sent.
+# Error tracking: enabled only when SENTRY_DSN is set; minimize collected request data.
 SENTRY_DSN = os.getenv('SENTRY_DSN', '').strip()
 if SENTRY_DSN:
     import sentry_sdk
@@ -253,6 +253,8 @@ if SENTRY_DSN:
         dsn=SENTRY_DSN,
         environment=os.getenv('SENTRY_ENVIRONMENT', 'production'),
         send_default_pii=False,
+        max_request_body_size="never",
+        include_local_variables=False,
         traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.05')),
     )
 
