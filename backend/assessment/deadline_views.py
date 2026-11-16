@@ -130,7 +130,7 @@ def student_tasks(user, enrollment_ids=None):
         enrollments = enrollments.filter(id__in=enrollment_ids)
     from learning.models import Step
     from courses.models import RunCheckpoint
-    from courses.access import can_manage_run
+    from courses.access import managed_run_ids
     from .models import ActivitySchedule, AssignmentExtension
     # Placements are prefetched so visibility checks run without per-activity queries.
     placements = Prefetch('steps', queryset=Step.objects.select_related('lesson__module__prerequisite'))
@@ -153,16 +153,19 @@ def student_tasks(user, enrollment_ids=None):
                 active_attempts.setdefault((attempt.enrollment_id, attempt.quiz_id), attempt)
             else:
                 finished_quizzes.add((attempt.enrollment_id, attempt.quiz_id))
+    from courses.pacing import module_deadline_states_many, module_release
     for e in enrollments:
-        base = {'course_id': e.course_id, 'course': e.course.title, 'run_id': e.run_id, 'run': e.run.title}
-        from courses.pacing import module_deadline_states, module_release
         if e.run.course_id == e.course_id:
             e.run.course = e.course  # reuse the joined row for permission checks
         e.run._module_release_map = {row.module_id: row for row in e.run._all_releases}
         e.run._deadline_rows = [row for row in e.run._all_releases if row.due_at is not None and row.module.is_published]
         e.run._prerequisite_cache = {}
-        manager = can_manage_run(user, e.run) if e.course._agenda_assignments or e.course._agenda_quizzes else False
-        module_states = module_deadline_states(e.run, [e], now)
+    # Deadline states and manager rights are computed once for all courses, not per course.
+    module_states = module_deadline_states_many([(e.run, [e]) for e in enrollments], now)
+    managed = managed_run_ids(user, [e.run for e in enrollments if e.id in ids])
+    for e in enrollments:
+        base = {'course_id': e.course_id, 'course': e.course.title, 'run_id': e.run_id, 'run': e.run.title}
+        manager = e.run_id in managed
         for row in e.run._deadline_rows:
             state = module_states.get((e.id, row.module_id))
             if not state:

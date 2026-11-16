@@ -23,6 +23,19 @@ def can_manage_run(user, run):
     return can_manage_course(user, run.course) or bool(user.is_authenticated and user.is_active and run.teachers.filter(pk=user.pk).exists())
 
 
+def managed_run_ids(user, runs):
+    """Batch can_manage_run: ids of the runs the user manages, in at most two queries."""
+    runs = list(runs)
+    if not runs or not user.is_authenticated or not user.is_active:
+        return set()
+    if is_platform_admin(user):
+        return {run.id for run in runs}
+    from .models import CourseMember, CourseRun
+    team = set(CourseMember.objects.filter(user=user, course_id__in={run.course_id for run in runs}).values_list('course_id', flat=True))
+    taught = set(CourseRun.teachers.through.objects.filter(user_id=user.pk, courserun_id__in=[run.id for run in runs]).values_list('courserun_id', flat=True))
+    return {run.id for run in runs if run.course.teacher_id == user.id or run.course_id in team or run.id in taught}
+
+
 def is_enrolled(user, course, run=None):
     if not user.is_authenticated or not user.is_active:
         return False

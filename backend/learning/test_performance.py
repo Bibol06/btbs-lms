@@ -111,7 +111,56 @@ class QueryScalingTests(TestCase):
         large = self.count(*self.build(4, 5))
         self.assertEqual(small, large)
 
+    def test_my_learning_is_constant_in_number_of_courses(self):
+        from courses.models import RunModuleRelease
+        from django.utils import timezone
+        from datetime import timedelta
+        counts = []
+        for n in (1, 4):
+            client, _ = self.build(1, n + 1)  # distinct user per iteration
+            user = Enrollment.objects.latest('id').student
+            for i in range(n - 1):
+                course = Course.objects.create(title=f'Extra {i}', is_published=True)
+                run = CourseRun.objects.create(course=course)
+                from .models import Module
+                from assessment.models import Quiz
+                module = Module.objects.create(course=course, title='M', position=1, is_published=True)
+                RunModuleRelease.objects.create(run=run, module=module, due_at=timezone.now() + timedelta(days=3))
+                lesson = Lesson.objects.create(course=course, module=module, title='L', position=1, is_published=True)
+                Step.objects.create(lesson=lesson, title='Q', kind='quiz', position=1, is_published=True,
+                                    quiz=Quiz.objects.create(course=course, title='Q', is_published=True))
+                Enrollment.objects.create(student=user, course=course, run=run)
+            first = Enrollment.objects.filter(student=user).earliest('id')
+            module = first.course.modules.first()
+            RunModuleRelease.objects.create(run=first.run, module=module, due_at=timezone.now() + timedelta(days=3))
+            counts.append(self.count(client, '/api/courses/my-learning/'))
+        self.assertEqual(counts[0], counts[1])
+
     def test_structure_checks_each_prerequisite_once_not_per_lesson(self):
         few = self.count(*self.build(3, 1, prerequisites=True))
         many = self.count(*self.build(3, 6, prerequisites=True))
         self.assertEqual(few, many)
+
+
+class ManagedRunIdsTests(TestCase):
+    def test_matches_can_manage_run_for_every_role(self):
+        from courses.access import can_manage_run, managed_run_ids
+        from courses.models import CourseMember
+        owner = User.objects.create(username='owner', role='teacher')
+        editor = User.objects.create(username='editor', role='teacher')
+        group_teacher = User.objects.create(username='group-teacher', role='teacher')
+        admin = User.objects.create(username='admin', role='admin')
+        inactive = User.objects.create(username='inactive', role='teacher', is_active=False)
+        student = User.objects.create(username='student', role='student')
+        runs = []
+        for n in range(3):
+            course = Course.objects.create(title=f'C{n}', is_published=True, teacher=owner if n == 0 else None)
+            runs.append(CourseRun.objects.create(course=course, kind='cohort', title=f'R{n}'))
+        CourseMember.objects.create(course=runs[1].course, user=editor)
+        CourseMember.objects.create(course=runs[1].course, user=inactive)
+        runs[2].teachers.add(group_teacher, inactive)
+        for user in (owner, editor, group_teacher, admin, inactive, student):
+            expected = {run.id for run in runs if can_manage_run(user, run)}
+            self.assertEqual(managed_run_ids(user, runs), expected, user.username)
+        self.assertEqual(managed_run_ids(admin, runs), {run.id for run in runs})
+        self.assertEqual(managed_run_ids(owner, runs), {runs[0].id})
