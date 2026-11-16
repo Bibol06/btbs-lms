@@ -1,0 +1,40 @@
+{
+  "database": "test_btbs_load_20261111215342",
+  "free_before": 13267099648,
+  "stages": [
+    {
+      "clients": 1,
+      "requests": 27,
+      "errors": 0,
+      "seconds": 15.22,
+      "rps": 1.77,
+      "p50_ms": 232,
+      "p95_ms": 813,
+      "free_bytes": 13253541888
+    },
+    {
+      "clients": 5,
+      "requests": 76,
+      "errors": 0,
+      "seconds": 15.57,
+      "rps": 4.88,
+      "p50_ms": 348,
+      "p95_ms": 2547,
+      "free_bytes": 13253541888
+    },
+    {
+      "clients": 20,
+      "requests": 123,
+      "errors": 0,
+      "seconds": 19.62,
+      "rps": 6.27,
+      "p50_ms": 987,
+      "p95_ms": 7829,
+      "free_bytes": 13253390336
+    }
+  ],
+  "scenario": "Authenticated GET only, 10 courses x 10 lessons, 50 student sessions, Waitress 8 threads, no browser/media/login hashing load",
+  "test_database_bytes": 13481663,
+  "test_database_removed": true,
+  "free_after": 13267038208
+}

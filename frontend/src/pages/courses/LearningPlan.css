@@ -1,0 +1,18 @@
+.learning-plan { min-width:0; }
+.plan-editor { border:0; padding:0; margin:0; min-width:0; display:grid; gap:18px; }
+.plan-modules { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); }
+.plan-module,.plan-checkpoint { border:1px solid #e1eaf1; border-radius:12px; padding:20px; background:#f9fcfd; min-width:0; }
+.plan-module { display:grid; gap:12px; align-content:start; }
+.plan-module h3 { margin:0; }
+.module-deadline-counts { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:13px; }
+.plan-module .module-deadline { margin:0; }
+.plan-checkpoint { margin-bottom:12px; }
+.plan-checkpoint .form-grid { margin-bottom:15px; }
+.learning-plan label { display:grid; gap:7px; font-size:13px; color:#526b80; }
+.learning-plan label.check { display:flex; margin:12px 0; }
+.learning-plan input,.learning-plan select { min-width:0; width:100%; box-sizing:border-box; }
+.learning-plan input:not([type=checkbox]),.learning-plan select { color:var(--ink,#122b46); background:white; border:1px solid #d7e0e8; border-radius:8px; padding:11px 13px; font:inherit; font-size:13px; line-height:1.5; }
+.learning-plan input:focus-visible,.learning-plan select:focus-visible { outline:3px solid #27bfca; outline-offset:2px; }
+.learning-plan input:disabled,.learning-plan select:disabled { background:#edf2f5; color:#64798b; }
+.learning-plan input[type=checkbox] { width:auto; }
+@media(max-width:600px) { .plan-module,.plan-checkpoint { padding:15px; } }

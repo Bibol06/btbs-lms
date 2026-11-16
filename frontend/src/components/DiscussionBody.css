@@ -1,0 +1,8 @@
+.discussion-text { min-width: 0; overflow-wrap: anywhere; }
+.discussion-text > p { margin: 12px 0 8px; }
+.discussion-translation-label, .discussion-original { color: #647a90; font-size: 11px; }
+.discussion-original { margin: 4px 0 12px; }
+.discussion-original summary { cursor: pointer; color: #16818e; width: fit-content; }
+.discussion-original summary:hover { text-decoration: underline; }
+.discussion-original summary:focus-visible { outline: 2px solid #2cbcc5; outline-offset: 3px; }
+.discussion-original > p { margin: 8px 0 0; padding: 10px 12px; border-left: 2px solid #d5e9ec; background: #f5f8fb; color: #50647b; font-size: 13px; }

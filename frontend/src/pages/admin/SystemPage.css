@@ -1,0 +1,24 @@
+.storage-course-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border, #e3eaf1);
+}
+.storage-course-row > div { min-width: 0; flex: 1 1 240px; }
+.storage-course-row p { margin: 8px 0; }
+.storage-course-row strong { overflow-wrap: anywhere; }
+.storage-course-path { display: grid; gap: 6px; font-size: .85rem; }
+.storage-course-path code { overflow-wrap: anywhere; }
+.backup-panel .section-heading { align-items: center; margin-bottom: 20px; }
+.backup-panel h3 { margin: 0; }
+.backup-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.backup-summary span { display: block; color: #64748b; font-size: 13px; margin-bottom: 9px; }
+.backup-summary strong { font-size: 15px; }
+.backup-file { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+.backup-file code { overflow-wrap: anywhere; }
+.backup-mail { border-top: 1px solid #e3eaf1; margin-top: 22px; padding-top: 22px; }
+.backup-mail p { margin-bottom: 0; }
+@media (max-width: 800px) { .backup-summary { grid-template-columns: 1fr; } }

@@ -1,0 +1,15 @@
+{
+  "database": "test_btbs_load_20261112215949",
+  "free_before": 13221298176,
+  "stages": [],
+  "scenario": "Authenticated GET only, 10 courses x 10 lessons, 50 student sessions, Waitress 8 threads, no browser/media/login hashing load",
+  "endpoint_queries": {
+    "/api/auth/me/": 10,
+    "/api/courses/": 6,
+    "/api/courses/my-learning/": 159,
+    "/api/learning/courses/1/structure/?run=1": 23
+  },
+  "test_database_bytes": 13465279,
+  "test_database_removed": true,
+  "free_after": 13270896640
+}

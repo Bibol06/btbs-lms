@@ -1,0 +1,29 @@
+# Local state: backups, keys, logs, screenshots, one-off scripts
+.local/
+
+# Secrets — never commit (use backend/.env.example as the template)
+.env
+**/.env
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Data and backups
+**/media/
+**/db.sqlite3
+*.sqlite3
+*.dump
+*.lmsbak
+*.zip
+
+# Python / Node build output
+**/.venv/
+**/node_modules/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/dist/
+
+# Logs
+*.log

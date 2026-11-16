@@ -1,0 +1,285 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "BTBS private media CDN. Merge output statement into existing S3 policy separately.",
+  "Parameters": {
+    "BucketName": {
+      "Type": "String"
+    },
+    "BucketRegion": {
+      "Type": "String",
+      "Default": "eu-north-1"
+    }
+  },
+  "Resources": {
+    "SigningKey": {
+      "Type": "AWS::CloudFront::PublicKey",
+      "Properties": {
+        "PublicKeyConfig": {
+          "CallerReference": {
+            "Fn::Sub": "${AWS::StackName}-key"
+          },
+          "Name": {
+            "Fn::Sub": "${AWS::StackName}-key"
+          },
+          "EncodedKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkTBpme5mLTIxD8yhr0sx\nKaqDBXBrHDrI9PkgTRzLQ/NaX9FsMX75y55nt5VIACDoD6K0V3y8gejSkr08Tm1M\nnGAWBCtis3pnTvFfl9Jsvd94RD+08wn4BV459nfJukX6L0lk8upG5iLOjqDhAwBg\n3cauGI80e0hau78Rr857q60JCFnSw8GPB6WaoSZygO3/pnfOR0LmMbnHAwvBJuFd\ns3JzSn76Se0Q9DvDZHdECrY75UXbQUHwsxNuIvOZFiZG9bAPEQ3z+vi9TLGls0XI\nD8nBi+Zea1rNm1Mq2hNcT1BUvD2In2EjhORbDYacfOJVZnH5g0zuvL7oYzTPEprR\naQIDAQAB\n-----END PUBLIC KEY-----\n"
+        }
+      }
+    },
+    "KeyGroup": {
+      "Type": "AWS::CloudFront::KeyGroup",
+      "Properties": {
+        "KeyGroupConfig": {
+          "Name": {
+            "Fn::Sub": "${AWS::StackName}-keys"
+          },
+          "Items": [
+            {
+              "Ref": "SigningKey"
+            }
+          ]
+        }
+      }
+    },
+    "OriginAccess": {
+      "Type": "AWS::CloudFront::OriginAccessControl",
+      "Properties": {
+        "OriginAccessControlConfig": {
+          "Name": {
+            "Fn::Sub": "${AWS::StackName}-s3"
+          },
+          "OriginAccessControlOriginType": "s3",
+          "SigningBehavior": "always",
+          "SigningProtocol": "sigv4"
+        }
+      }
+    },
+    "MediaCache": {
+      "Type": "AWS::CloudFront::CachePolicy",
+      "Properties": {
+        "CachePolicyConfig": {
+          "Name": {
+            "Fn::Sub": "${AWS::StackName}-media"
+          },
+          "DefaultTTL": 3600,
+          "MinTTL": 60,
+          "MaxTTL": 86400,
+          "ParametersInCacheKeyAndForwardedToOrigin": {
+            "CookiesConfig": {
+              "CookieBehavior": "none"
+            },
+            "HeadersConfig": {
+              "HeaderBehavior": "none"
+            },
+            "QueryStringsConfig": {
+              "QueryStringBehavior": "none"
+            },
+            "EnableAcceptEncodingGzip": false,
+            "EnableAcceptEncodingBrotli": false
+          }
+        }
+      }
+    },
+    "Distribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "Properties": {
+        "DistributionConfig": {
+          "Enabled": true,
+          "Comment": "BTBS private course media",
+          "PriceClass": "PriceClass_100",
+          "HttpVersion": "http2",
+          "Origins": [
+            {
+              "Id": "MediaS3",
+              "DomainName": {
+                "Fn::Sub": "${BucketName}.s3.${BucketRegion}.amazonaws.com"
+              },
+              "OriginPath": "/_s3",
+              "OriginAccessControlId": {
+                "Ref": "OriginAccess"
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": ""
+              }
+            }
+          ],
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "MediaS3",
+            "ViewerProtocolPolicy": "https-only",
+            "AllowedMethods": [
+              "GET",
+              "HEAD"
+            ],
+            "CachedMethods": [
+              "GET",
+              "HEAD"
+            ],
+            "TrustedKeyGroups": [
+              {
+                "Ref": "KeyGroup"
+              }
+            ],
+            "CachePolicyId": {
+              "Ref": "MediaCache"
+            },
+            "Compress": false
+          },
+          "ViewerCertificate": {
+            "CloudFrontDefaultCertificate": true
+          }
+        }
+      }
+    },
+    "Backups": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "BucketName": {
+          "Fn::Sub": "btbs-lms-backups-${AWS::AccountId}-${AWS::Region}"
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "IgnorePublicAcls": true,
+          "BlockPublicPolicy": true,
+          "RestrictPublicBuckets": true
+        },
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "EncryptedArchiveRetention",
+              "Status": "Enabled",
+              "Prefix": "encrypted/",
+              "ExpirationInDays": 30,
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 7
+              },
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 1
+              }
+            }
+          ]
+        }
+      }
+    },
+    "BackupTLS": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {
+          "Ref": "Backups"
+        },
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "RequireTLS",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Action": "s3:*",
+              "Resource": [
+                {
+                  "Fn::Sub": "arn:aws:s3:::${Backups}"
+                },
+                {
+                  "Fn::Sub": "arn:aws:s3:::${Backups}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "StorageAdditions": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "BtbsMultipartAndEncryptedBackups",
+        "Users": [
+          "btbs-lms-storage"
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "ResumeOwnMedia",
+              "Effect": "Allow",
+              "Action": [
+                "s3:AbortMultipartUpload",
+                "s3:ListMultipartUploadParts"
+              ],
+              "Resource": {
+                "Fn::Sub": "arn:aws:s3:::${BucketName}/_staging/*"
+              }
+            },
+            {
+              "Sid": "EncryptedBackupsNoDelete",
+              "Effect": "Allow",
+              "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:GetObjectVersion",
+                "s3:AbortMultipartUpload",
+                "s3:ListMultipartUploadParts"
+              ],
+              "Resource": {
+                "Fn::Sub": "arn:aws:s3:::${Backups}/encrypted/*"
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "Domain": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Distribution",
+          "DomainName"
+        ]
+      }
+    },
+    "KeyId": {
+      "Value": {
+        "Ref": "SigningKey"
+      }
+    },
+    "DistributionId": {
+      "Value": {
+        "Ref": "Distribution"
+      }
+    },
+    "BucketPolicyStatement": {
+      "Value": {
+        "Fn::Sub": "{\"Sid\":\"BtbsCloudFrontRead\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"cloudfront.amazonaws.com\"},\"Action\":\"s3:GetObject\",\"Resource\":\"arn:aws:s3:::${BucketName}/_s3/*\",\"Condition\":{\"StringEquals\":{\"AWS:SourceArn\":\"arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}\"}}}"
+      }
+    },
+    "BackupBucket": {
+      "Value": {
+        "Ref": "Backups"
+      }
+    }
+  }
+}

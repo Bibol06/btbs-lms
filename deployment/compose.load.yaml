@@ -1,0 +1,33 @@
+name: btbs-benchmark
+services:
+  cache:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+    mem_limit: 192m
+  probe:
+    image: btbs-local-web
+    env_file: ../backend/.env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DB_HOST: host.docker.internal
+      LMS_REDIS_URL: ${BENCH_REDIS_URL:-}
+      LOAD_BIND: 0.0.0.0
+      LOAD_BASE_URL: http://proxy
+      LOAD_STAGES: '100'
+      LOAD_SECONDS: '30'
+      LOAD_THREADS: ${BENCH_THREADS:-8}
+      LOAD_REPORT_DIR: /reports
+      PYTHONDONTWRITEBYTECODE: '1'
+    volumes:
+      - ../backend:/app:ro
+      - ../.local/loadreports:/reports
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    command: ["python", "load_probe_local.py"]
+    depends_on: [cache]
+    mem_limit: 768m
+  proxy:
+    image: btbs-local-nginx
+    volumes:
+      - ./nginx.load.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on: [probe]
+    mem_limit: 128m

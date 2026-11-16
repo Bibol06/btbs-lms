@@ -1,0 +1,29 @@
+.management-page { display: grid; gap: 22px; }
+.management-page > .section-heading { margin: 0; }
+.management-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.teacher-dashboard > .management-actions { margin-top: 18px; }
+.management-metric { padding: 18px; border: 1px solid #e1e6e2; border-radius: 9px; background: white; }
+.management-metric strong { display: block; font-size: 27px; color: #287d3c; }
+.management-metric span { color: #626c74; font-size: 13px; }
+.management-metric.attention strong { color: #b14b38; }
+.management-filters { display: flex; gap: 14px; flex-wrap: wrap; align-items: end; padding: 18px; border-radius: 9px; background: white; border: 1px solid #e1e6e2; }
+.management-filters label { display: grid; gap: 5px; font-size: 13px; flex: 1 1 170px; }
+.management-filters input, .management-filters select { width: 100%; padding: 9px; border: 1px solid #cdd7d0; border-radius: 5px; background: white; }
+.management-table-wrap { overflow-x: auto; background: white; border: 1px solid #e1e6e2; border-radius: 9px; }
+.management-table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.management-table th, .management-table td { text-align: left; padding: 15px; border-bottom: 1px solid #e9edeb; vertical-align: top; }
+.management-table th { background: #f2f6f3; font-weight: 600; white-space: nowrap; }
+.management-table td small { display: block; margin-top: 4px; color: #6b747c; }
+.management-table td .action-row { margin-top: 8px; }
+.management-table progress { display: block; width: 130px; }
+.management-note { padding: 15px 18px; border-left: 3px solid #82b88c; background: #eef5ef; border-radius: 5px; }
+.management-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.management-events { display: grid; gap: 12px; }
+.management-events .study-card { margin: 0; }
+.management-events time { color: #6b747c; font-size: 13px; }
+.management-page .review-queue { margin-top: 0; }
+.workspace-denied { padding: 24px; background: white; border-radius: 9px; }
+.workspace-marker { display: inline-block; margin: 0 0 12px; font-size: 12px; font-weight: 600; color: #6d7971; }
+.management-pagination { display: flex; gap: 15px; align-items: center; }
+@media (max-width: 780px) { .management-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .management-metric { padding: 13px; } }
+@media (min-width: 781px) and (max-width: 1100px) { .management-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

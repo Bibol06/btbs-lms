@@ -1,0 +1,17 @@
+.person-role {
+  display: inline-block;
+  vertical-align: middle;
+  margin-inline: .45em;
+  padding: .15em .55em;
+  border: 1px solid #d3dfd4;
+  border-radius: 5px;
+  background: #eef5ef;
+  color: #305739;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.account-button .person-role { margin-inline-start: 0; }
+.account-button > span:last-child { text-align: left; white-space: nowrap; }
+.header-actions { flex-shrink: 0; }

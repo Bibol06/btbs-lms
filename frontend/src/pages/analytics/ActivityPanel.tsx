@@ -1,0 +1,15 @@
+import { ct } from '../../i18n/content'
+import { localizedLabels, t as tr } from '../../i18n/language'
+import { useEffect, useState } from 'react'
+import { apiRequest } from '../../api'
+import RoleBadge from '../../components/RoleBadge'
+import { errorMessage, formatDate } from '../study/types'
+import { Pagination } from '../management/ManagementParts'
+
+type Event = { id: number; person: { id: number; display_name: string; role_label: string }; kind: string; actor_role: string; occurred_at: string; course: string | null; run: string | null; lesson: string | null; step: string | null; target: string | null }
+const labels: Record<string, string> = localizedLabels({ step_view: 'Открыл учебный шаг', step_completed: 'Отметил материал изученным', step_reopened: 'Снял отметку изучения', assignment_submitted: 'Отправил письменную работу', assignment_reviewed: 'Проверил работу', assignment_returned: 'Вернул работу на доработку', quiz_started: 'Начал тест', quiz_answered: 'Сохранил ответы теста', quiz_finished: 'Завершил тест', quiz_finished_auto: 'Тест завершён системой по таймеру', code_submitted: 'Отправил решение Python' })
+export default function ActivityPanel({ query, revision }: { query: string; revision: number }) {
+  const [data, setData] = useState<{ total: number; next_page: number | null; events: Event[] } | null>(null), [page, setPage] = useState(1), [error, setError] = useState(''), [loading, setLoading] = useState(true)
+  useEffect(() => { let alive = true; const timer = window.setTimeout(() => { setLoading(true); apiRequest<typeof data>(`/api/analytics/activity/?${query}&page=${page}`).then(value => { if (alive) { setData(value); setError('') } }).catch(err => { if (alive) setError(errorMessage(err)) }).finally(() => { if (alive) setLoading(false) }) }, 150); return () => { alive = false; window.clearTimeout(timer) } }, [query, page, revision])
+  return <section className="analytics-panel"><div className="analytics-section-heading"><div><p className="analytics-eyebrow">{tr("Наблюдение за выполнением задач")}</p><h3>{tr("История учебных действий")}</h3></div></div>{error && <p className="error" role="alert">{tr(error)}</p>}{loading ? <p role="status">{tr("Загрузка действий…")}</p> : data && !error && <>{!data.events.length ? <p className="analytics-empty-inline">{tr("Действий с такими условиями пока нет.")}</p> : <div className="analytics-table-wrap"><table className="analytics-table"><thead><tr><th>{tr("Дата")}</th><th>{tr("Пользователь")}</th><th>{tr("Действие")}</th><th>{tr("Где")}</th><th>{tr("Подробности")}</th></tr></thead><tbody>{data.events.map(e => <tr key={e.id}><td>{formatDate(e.occurred_at)}</td><td><strong>{e.person.display_name}</strong><RoleBadge label={tr(e.person.role_label)} /></td><td>{labels[e.kind] || e.kind}</td><td>{ct(e, "course") || tr("Платформа")}<small>{[e.run,e.lesson,e.step].filter(Boolean).join(' · ')}</small></td><td>{e.target && <a href={e.target}>{tr("Журнал и результаты →")}</a>}</td></tr>)}</tbody></table></div>}<Pagination page={page} total={data.total} next={data.next_page} change={p => { setLoading(true); setPage(p) }} /></>}</section>
+}

@@ -1,0 +1,26 @@
+{
+  "database": "test_btbs_load_20261112222447",
+  "free_before": 8295428096,
+  "stages": [
+    {
+      "clients": 100,
+      "requests": 551,
+      "errors": 0,
+      "seconds": 17.55,
+      "rps": 31.39,
+      "p50_ms": 3053,
+      "p95_ms": 3873,
+      "free_bytes": 8280588288
+    }
+  ],
+  "scenario": "Authenticated GET only, 10 courses x 10 lessons, 100 student sessions, Waitress 8 threads, no browser/media/login hashing load",
+  "endpoint_queries": {
+    "/api/auth/me/": 10,
+    "/api/courses/": 7,
+    "/api/courses/my-learning/": 27,
+    "/api/learning/courses/1/structure/?run=1": 23
+  },
+  "test_database_bytes": 13964991,
+  "test_database_removed": true,
+  "free_after": 8294723584
+}

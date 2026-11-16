@@ -1,0 +1,11 @@
+{
+  "Rules": [
+    {
+      "ID": "CleanOnlyTemporaryLmsUploads",
+      "Status": "Enabled",
+      "Filter": {"Prefix": "_staging/"},
+      "Expiration": {"Days": 1},
+      "AbortIncompleteMultipartUpload": {"DaysAfterInitiation": 1}
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+name: btbs-local
+services:
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+    ports: ["127.0.0.1:6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 192m
+    restart: unless-stopped
+  web:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    env_file: ../backend/.env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.container_settings
+      DB_HOST: host.docker.internal
+      LMS_REDIS_URL: redis://redis:6379/1
+      MEDIA_CDN_PRIVATE_KEY_FILE: /run/cdn/signing-key.pem
+      LMS_BACKUP_DIR: /app-state/backups
+      LMS_BACKUP_KEY_FILE: /run/backup-keys/main.key
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - ../backend/media:/app/media
+      - ../.local/cdn:/run/cdn:ro
+      - ../.local/backups/scheduled:/app-state/backups
+      - ../.local/backup-keys:/run/backup-keys:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    mem_limit: 768m
+    restart: unless-stopped
+  nginx:
+    build:
+      context: ..
+      dockerfile: deployment/nginx.Dockerfile
+    ports: ["127.0.0.1:8080:80"]
+    depends_on: [web]
+    mem_limit: 128m
+    restart: unless-stopped
