@@ -128,13 +128,40 @@ def student_tasks(user, enrollment_ids=None):
     enrollments = Enrollment.objects.filter(student=user, status__in=['active', 'completed'], course__is_published=True).select_related('course', 'run')
     if enrollment_ids is not None:
         enrollments = enrollments.filter(id__in=enrollment_ids)
-    enrollments = enrollments.prefetch_related(
-        Prefetch('course__assignments', queryset=Assignment.objects.filter(is_published=True), to_attr='_agenda_assignments'),
-        Prefetch('course__quizzes', queryset=Quiz.objects.filter(is_published=True), to_attr='_agenda_quizzes'),
-        Prefetch('run__module_releases', queryset=RunModuleRelease.objects.filter(due_at__isnull=False, module__is_published=True).select_related('module'), to_attr='_deadline_rows'))
+    from learning.models import Step
+    from courses.models import RunCheckpoint
+    from courses.access import can_manage_run
+    from .models import ActivitySchedule, AssignmentExtension
+    # Placements are prefetched so visibility checks run without per-activity queries.
+    placements = Prefetch('steps', queryset=Step.objects.select_related('lesson__module__prerequisite'))
+    enrollments = list(enrollments.prefetch_related(
+        Prefetch('course__assignments', queryset=Assignment.objects.filter(is_published=True).prefetch_related(placements), to_attr='_agenda_assignments'),
+        Prefetch('course__quizzes', queryset=Quiz.objects.filter(is_published=True).prefetch_related(
+            placements, Prefetch('checkpoints', queryset=RunCheckpoint.objects.only('id', 'run_id', 'quiz_id'))), to_attr='_agenda_quizzes'),
+        Prefetch('run__module_releases', queryset=RunModuleRelease.objects.select_related('module'), to_attr='_all_releases')))
+    # Activity state is loaded in one batch per table, and only when some course has activities.
+    ids = [e.id for e in enrollments if e.course._agenda_assignments or e.course._agenda_quizzes]
+    schedules, extensions, latest_submission, active_attempts, finished_quizzes = {}, {}, {}, {}, set()
+    if ids:
+        for row in ActivitySchedule.objects.filter(run_id__in={e.run_id for e in enrollments}):
+            schedules[row.run_id, 'assignment' if row.assignment_id else 'quiz', row.assignment_id or row.quiz_id] = row
+        extensions = {(x.enrollment_id, x.assignment_id): x for x in AssignmentExtension.objects.filter(enrollment_id__in=ids)}
+        for s in Submission.objects.filter(enrollment_id__in=ids).select_related('reviewer'):  # newest first (Meta.ordering)
+            latest_submission.setdefault((s.enrollment_id, s.assignment_id), s)
+        for attempt in QuizAttempt.objects.filter(enrollment_id__in=ids, status__in=['active', 'finished']):
+            if attempt.status == 'active':
+                active_attempts.setdefault((attempt.enrollment_id, attempt.quiz_id), attempt)
+            else:
+                finished_quizzes.add((attempt.enrollment_id, attempt.quiz_id))
     for e in enrollments:
         base = {'course_id': e.course_id, 'course': e.course.title, 'run_id': e.run_id, 'run': e.run.title}
         from courses.pacing import module_deadline_states, module_release
+        if e.run.course_id == e.course_id:
+            e.run.course = e.course  # reuse the joined row for permission checks
+        e.run._module_release_map = {row.module_id: row for row in e.run._all_releases}
+        e.run._deadline_rows = [row for row in e.run._all_releases if row.due_at is not None and row.module.is_published]
+        e.run._prerequisite_cache = {}
+        manager = can_manage_run(user, e.run) if e.course._agenda_assignments or e.course._agenda_quizzes else False
         module_states = module_deadline_states(e.run, [e], now)
         for row in e.run._deadline_rows:
             state = module_states.get((e.id, row.module_id))
@@ -149,11 +176,12 @@ def student_tasks(user, enrollment_ids=None):
                           'target': f'/#course={e.course_id}&run={e.run_id}&tab=plan'})
         for a in e.course._agenda_assignments:
             try:
-                require_activity_visible(user, a, e.run, 'assignment')
+                require_activity_visible(user, a, e.run, 'assignment', manager=manager)
             except ApiError:
                 continue
-            latest = a.submissions.filter(enrollment=e).select_related('reviewer').first()
-            window = submission_window(a, e, now=now)
+            latest = latest_submission.get((e.id, a.id))
+            window = submission_window(a, e, settings=schedules.get((e.run_id, 'assignment', a.id)) or a, now=now,
+                                       personal=extensions.get((e.id, a.id)))
             state = 'waiting' if latest and latest.status == 'submitted' else 'graded' if latest and latest.status == 'graded' else 'revision' if latest and latest.status == 'returned' and window['can_submit'] else window['phase']
             tasks.append({**base, 'id': f'assignment:{a.id}:{e.id}', 'kind': 'assignment', 'title': a.title, 'state': state,
                           'due_at': window['due_at'], 'closes_at': window['closes_at'], 'source': window['source'],
@@ -163,13 +191,12 @@ def student_tasks(user, enrollment_ids=None):
                           'target': f'/#course={e.course_id}&run={e.run_id}&tab=assignments&activity={a.id}'})
         for q in e.course._agenda_quizzes:
             try:
-                require_activity_visible(user, q, e.run, 'quiz')
+                require_activity_visible(user, q, e.run, 'quiz', manager=manager)
             except ApiError:
                 continue
-            from .models import ActivitySchedule
-            settings = ActivitySchedule.objects.filter(run=e.run, quiz=q).first() or q
-            active = q.attempts.filter(enrollment=e, status='active').first()
-            finished = q.attempts.filter(enrollment=e, status='finished').exists()
+            settings = schedules.get((e.run_id, 'quiz', q.id)) or q
+            active = active_attempts.get((e.id, q.id))
+            finished = (e.id, q.id) in finished_quizzes
             closes = settings.closes_at
             if e.run.ends_at:
                 closes = min(closes, e.run.ends_at) if closes else e.run.ends_at

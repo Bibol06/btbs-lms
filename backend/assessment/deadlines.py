@@ -19,10 +19,15 @@ def deadline_values(data, current=None):
             'review_hours': integer(data, 'review_hours', 1, 720, getattr(current, 'review_hours', 48))}
 
 
-def submission_window(assignment, enrollment, settings=None, now=None):
+_UNKNOWN = object()
+
+
+def submission_window(assignment, enrollment, settings=None, now=None, personal=_UNKNOWN):
+    """`personal` may be passed pre-loaded (an extension or None) by batch callers."""
     now = now or timezone.now()
     settings = settings or assignment_settings(assignment, enrollment.run)
-    personal = AssignmentExtension.objects.filter(assignment=assignment, enrollment=enrollment).first()
+    if personal is _UNKNOWN:
+        personal = AssignmentExtension.objects.filter(assignment=assignment, enrollment=enrollment).first()
     due = personal.deadline_at if personal else settings.due_at
     cutoff = personal.deadline_at if personal else settings.cutoff_at if settings.allow_late else settings.due_at
     # An explicit personal extension can outlive the group's submission period.

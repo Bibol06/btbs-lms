@@ -35,7 +35,10 @@ def structure(request, course_id):
     require_run(request, run)
     manager = can_manage_run(request.user, run)
     run._module_release_map = {row.module_id: row for row in run.module_releases.all()}
+    run._prerequisite_cache = {}  # read-only request: each prerequisite module is checked once
     enrollment = Enrollment.objects.filter(run=run, student=request.user).first()
+    if enrollment:
+        enrollment.run = run
     from courses.pacing import module_deadline_states
     deadline_states = module_deadline_states(run, [enrollment] if enrollment else [])
     modules = course.modules.all() if manager else course.modules.filter(is_published=True)

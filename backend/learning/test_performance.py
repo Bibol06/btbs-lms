@@ -61,3 +61,57 @@ class PerformanceRegressionTests(TestCase):
         self.assertEqual(attach_counts([self.course])[0].public_lessons, 0)
         with patch('courses.catalog_cache.cache.get_many', side_effect=ConnectionError), patch('courses.catalog_cache.cache.set_many', side_effect=ConnectionError):
             self.assertEqual(attach_counts([self.course])[0].all_lessons, 1)
+
+
+class QueryScalingTests(TestCase):
+    """Dashboard and course-plan queries must not grow with lessons/activities (N+1)."""
+
+    def build(self, modules, lessons, prerequisites=False):
+        from django.test import Client
+        from assessment.models import Assignment, Quiz
+        from courses.models import RunCheckpoint
+        from .models import Module
+        user = User.objects.create(username=f'scale-{modules}-{lessons}-{prerequisites}', role='student')
+        course = Course.objects.create(title='Scale', is_published=True)
+        run = CourseRun.objects.create(course=course)
+        previous = None
+        for mi in range(modules):
+            module = Module.objects.create(course=course, title='M', position=mi + 1, is_published=True,
+                                           prerequisite=previous if prerequisites else None)
+            previous = module
+            RunCheckpoint.objects.create(run=run, kind='weekly', period=mi + 1,
+                                         quiz=Quiz.objects.create(course=course, title='C', is_published=True))
+            for li in range(lessons):
+                lesson = Lesson.objects.create(course=course, module=module, title='L', position=mi * 100 + li + 1, is_published=True)
+                Step.objects.create(lesson=lesson, title='T', position=1, is_published=True)
+                Step.objects.create(lesson=lesson, title='Q', kind='quiz', position=2, is_published=True,
+                                    quiz=Quiz.objects.create(course=course, title='Q', is_published=True))
+                Step.objects.create(lesson=lesson, title='A', kind='assignment', position=3, is_published=True,
+                                    assignment=Assignment.objects.create(course=course, title='A', is_published=True))
+        Enrollment.objects.create(student=user, course=course, run=run)
+        client = Client()
+        client.force_login(user)
+        return client, f'/api/learning/courses/{course.pk}/structure/?run_id={run.pk}'
+
+    def count(self, client, path):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        client.get(path)  # first call writes baseline progress snapshots
+        with CaptureQueriesContext(connection) as captured:
+            self.assertEqual(client.get(path).status_code, 200)
+        return len(captured)
+
+    def test_my_learning_is_constant_in_course_size(self):
+        small = self.count(self.build(1, 1)[0], '/api/courses/my-learning/')
+        large = self.count(self.build(4, 5)[0], '/api/courses/my-learning/')
+        self.assertEqual(small, large)
+
+    def test_structure_is_constant_in_lessons_and_checkpoints(self):
+        small = self.count(*self.build(1, 1))
+        large = self.count(*self.build(4, 5))
+        self.assertEqual(small, large)
+
+    def test_structure_checks_each_prerequisite_once_not_per_lesson(self):
+        few = self.count(*self.build(3, 1, prerequisites=True))
+        many = self.count(*self.build(3, 6, prerequisites=True))
+        self.assertEqual(few, many)

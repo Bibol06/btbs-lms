@@ -45,6 +45,18 @@ def course_progress(course, enrollment):
     steps = list(with_step_progress(visible_steps(course).filter(required=True), enrollment).select_related('assignment', 'quiz', 'code_problem'))
     checks = list(enrollment.run.checkpoints.filter(required=True, quiz__is_published=True)) if enrollment else []
     thresholds = {c.quiz_id: c.pass_percent for c in checks}
+    # Checkpoint thresholds are compared in Python on one batch of finished attempts.
+    # Integer arithmetic (score*100 >= max*pct) is exactly the former SQL condition.
+    attempts = {}
+    if enrollment and checks:
+        from assessment.models import QuizAttempt
+        for quiz_id, score, maximum in QuizAttempt.objects.filter(enrollment=enrollment, status='finished', max_score__gt=0,
+                quiz_id__in=thresholds).values_list('quiz_id', 'score', 'max_score'):
+            attempts.setdefault(quiz_id, []).append((score, maximum))
+
+    def passed_checkpoint(quiz_id, percent):
+        return any(score * 100 >= maximum * percent for score, maximum in attempts.get(quiz_id, ()))
+
     if not steps:
         # Compatibility for older courses/tests with lessons and no steps yet.
         total = course.lessons.filter(is_published=True).count()
@@ -54,20 +66,16 @@ def course_progress(course, enrollment):
         done = 0
         for step in steps:
             if step.kind == 'quiz' and thresholds.get(step.quiz_id, 0) > step.pass_percent:
-                from django.db.models import F
-                done += int(step.quiz.attempts.filter(enrollment=enrollment, status='finished', max_score__gt=0,
-                    score__gte=F('max_score') * thresholds[step.quiz_id] / 100.0).exists())
+                done += int(passed_checkpoint(step.quiz_id, thresholds[step.quiz_id]))
             else:
                 done += int(step_completed(step, enrollment))
     if enrollment:
-        from django.db.models import F
         placed = {s.quiz_id for s in steps if s.kind == 'quiz'}
         for check in checks:
             if check.quiz_id in placed:
                 continue
             total += 1
-            done += int(check.quiz.attempts.filter(enrollment=enrollment, status='finished', max_score__gt=0,
-                score__gte=F('max_score') * check.pass_percent / 100.0).exists())
+            done += int(passed_checkpoint(check.quiz_id, check.pass_percent))
     return {'completed': done, 'total': total, 'percent': round(done * 100 / total) if total else 0}
 
 
@@ -205,30 +213,51 @@ def require_lesson_visible(user, lesson, run, *, manager=None):
         if module.prerequisite_id:
             if not module.prerequisite.is_published:
                 raise ApiError('Предыдущий модуль ещё не опубликован', 403)
-            from courses.models import Enrollment
-            enrollment = Enrollment.objects.filter(run=run, student=user).first()
-            prerequisites = visible_steps(run.course).filter(lesson__module=module.prerequisite, required=True)
-            if any(not step_completed(s, enrollment) for s in prerequisites):
+            if not prerequisite_completed(user, module.prerequisite, run):
                 raise ApiError('Сначала завершите обязательные шаги предыдущего модуля', 403)
 
 
-def require_activity_visible(user, activity, run, kind):
+def prerequisite_completed(user, prerequisite, run):
+    # Read-only list views opt in via run._prerequisite_cache, so a module's
+    # prerequisite is evaluated once per request instead of once per lesson.
+    cache = getattr(run, '_prerequisite_cache', None)
+    key = (user.pk, prerequisite.pk)
+    if cache is not None and key in cache:
+        return cache[key]
+    from courses.models import Enrollment
+    enrollment = Enrollment.objects.filter(run=run, student=user).first()
+    steps = with_step_progress(visible_steps(run.course).filter(lesson__module=prerequisite, required=True), enrollment)
+    done = all(step_completed(s, enrollment) for s in steps)
+    if cache is not None:
+        cache[key] = done
+    return done
+
+
+def require_activity_visible(user, activity, run, kind, *, manager=None):
     # If an activity is used in steps, at least one published, unlocked placement is required.
-    if can_manage_run(user, run):
+    # Uses .all() so callers can prefetch checkpoints and steps__lesson__module.
+    if manager if manager is not None else can_manage_run(user, run):
         return
     if run.starts_at and timezone.now() < run.starts_at:
         raise ApiError('Обучение ещё не началось', 403)
-    if kind == 'quiz' and activity.checkpoints.exists():
-        if activity.checkpoints.filter(run=run).exists():
-            return
-        if not activity.steps.exists():
-            raise ApiError('Тест не назначен этой группе', 403)
     placements = activity.steps.all()
-    if not placements.exists():
+    if 'steps' not in getattr(activity, '_prefetched_objects_cache', {}):
+        placements = placements.select_related('lesson__module__prerequisite')
+    placements = list(placements)
+    if kind == 'quiz':
+        checkpoints = list(activity.checkpoints.all())
+        if checkpoints:
+            if any(c.run_id == run.id for c in checkpoints):
+                return
+            if not placements:
+                raise ApiError('Тест не назначен этой группе', 403)
+    if not placements:
         return
-    for step in placements.filter(is_published=True).select_related('lesson__module'):
+    for step in placements:
+        if not step.is_published:
+            continue
         try:
-            require_lesson_visible(user, step.lesson, run)
+            require_lesson_visible(user, step.lesson, run, manager=False)
             return
         except ApiError:
             pass
