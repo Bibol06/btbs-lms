@@ -120,26 +120,47 @@ def assign_reviewer(request, submission_id):
 
 
 def student_tasks(user, enrollment_ids=None):
-    from django.db.models import Prefetch
-    from courses.models import RunModuleRelease
-    from .models import Assignment, Quiz
-    now = timezone.now()
-    tasks = []
+    from courses.access import managed_run_ids
     enrollments = Enrollment.objects.filter(student=user, status__in=['active', 'completed'], course__is_published=True).select_related('course', 'run')
     if enrollment_ids is not None:
         enrollments = enrollments.filter(id__in=enrollment_ids)
+    enrollments = load_task_sources(enrollments)
+    for e in enrollments:
+        e.student = user
+
+    def managed(with_activities):
+        runs = managed_run_ids(user, [e.run for e in with_activities])
+        return {e.id for e in with_activities if e.run_id in runs}
+    now = timezone.now()
+    by_enrollment = tasks_by_enrollment(enrollments, managed, now)
+    tasks = [task for e in enrollments for task in by_enrollment[e.id]]
+    return sorted(tasks, key=lambda item: (item['state'] == 'graded', item.get('review_due_at') or item['closes_at'] or item['due_at'] or datetime.max.replace(tzinfo=now.tzinfo)))
+
+
+def load_task_sources(enrollments):
+    """Evaluate an enrollment queryset (with course and run joined) together with the activities,
+    placements and module releases that tasks_by_enrollment reads."""
+    from django.db.models import Prefetch
+    from courses.models import RunCheckpoint, RunModuleRelease
     from learning.models import Step
-    from courses.models import RunCheckpoint
-    from courses.access import managed_run_ids
-    from .models import ActivitySchedule, AssignmentExtension
+    from .models import Assignment, Quiz
     # Placements are prefetched so visibility checks run without per-activity queries.
     placements = Prefetch('steps', queryset=Step.objects.select_related('lesson__module__prerequisite'))
-    enrollments = list(enrollments.prefetch_related(
+    return list(enrollments.prefetch_related(
         Prefetch('course__assignments', queryset=Assignment.objects.filter(is_published=True).prefetch_related(placements), to_attr='_agenda_assignments'),
         Prefetch('course__quizzes', queryset=Quiz.objects.filter(is_published=True).prefetch_related(
             placements, Prefetch('checkpoints', queryset=RunCheckpoint.objects.only('id', 'run_id', 'quiz_id'))), to_attr='_agenda_quizzes'),
         Prefetch('run__module_releases', queryset=RunModuleRelease.objects.select_related('module'), to_attr='_all_releases')))
+
+
+def tasks_by_enrollment(enrollments, managed, now):
+    """Agenda items per enrollment id; works for enrollments of one or many students.
+
+    Visibility is checked as e.student; managed(enrollments) returns the ids whose student
+    manages that run (managers see every activity)."""
+    from .models import ActivitySchedule, AssignmentExtension
     # Activity state is loaded in one batch per table, and only when some course has activities.
+    result = {e.id: [] for e in enrollments}
     ids = [e.id for e in enrollments if e.course._agenda_assignments or e.course._agenda_quizzes]
     schedules, extensions, latest_submission, active_attempts, finished_quizzes = {}, {}, {}, {}, set()
     if ids:
@@ -162,10 +183,11 @@ def student_tasks(user, enrollment_ids=None):
         e.run._prerequisite_cache = {}
     # Deadline states and manager rights are computed once for all courses, not per course.
     module_states = module_deadline_states_many([(e.run, [e]) for e in enrollments], now)
-    managed = managed_run_ids(user, [e.run for e in enrollments if e.id in ids])
+    managers = managed([e for e in enrollments if e.id in set(ids)]) if ids else set()
     for e in enrollments:
+        user, tasks = e.student, result[e.id]
         base = {'course_id': e.course_id, 'course': e.course.title, 'run_id': e.run_id, 'run': e.run.title}
-        manager = e.run_id in managed
+        manager = e.id in managers
         for row in e.run._deadline_rows:
             state = module_states.get((e.id, row.module_id))
             if not state:
@@ -209,7 +231,7 @@ def student_tasks(user, enrollment_ids=None):
             tasks.append({**base, 'id': f'quiz:{q.id}:{e.id}', 'kind': 'quiz', 'title': q.title, 'state': state,
                           'due_at': closes, 'closes_at': closes, 'opens_at': settings.opens_at,
                           'target': f'/#course={e.course_id}&run={e.run_id}&tab=quizzes&activity={q.id}'})
-    return sorted(tasks, key=lambda item: (item['state'] == 'graded', item.get('review_due_at') or item['closes_at'] or item['due_at'] or datetime.max.replace(tzinfo=now.tzinfo)))
+    return result
 
 
 @require_GET

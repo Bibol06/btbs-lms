@@ -164,3 +164,86 @@ class ManagedRunIdsTests(TestCase):
             self.assertEqual(managed_run_ids(user, runs), expected, user.username)
         self.assertEqual(managed_run_ids(admin, runs), {run.id for run in runs})
         self.assertEqual(managed_run_ids(owner, runs), {runs[0].id})
+
+    def test_enrollment_batch_matches_can_manage_run(self):
+        from courses.access import can_manage_run, managed_enrollment_ids
+        from courses.models import CourseMember
+        owner = User.objects.create(username='owner', role='teacher')
+        editor = User.objects.create(username='editor', role='teacher')
+        group_teacher = User.objects.create(username='group-teacher', role='teacher')
+        admin = User.objects.create(username='admin', role='admin')
+        student = User.objects.create(username='student', role='student')
+        course = Course.objects.create(title='C', is_published=True, teacher=owner)
+        other = Course.objects.create(title='O', is_published=True)
+        runs = [CourseRun.objects.create(course=course, kind='cohort', title='R'), CourseRun.objects.create(course=other, kind='cohort', title='S')]
+        CourseMember.objects.create(course=other, user=editor)
+        runs[0].teachers.add(group_teacher)
+        enrollments = [Enrollment.objects.create(student=u, course=r.course, run=r) for u in (owner, editor, group_teacher, admin, student) for r in runs]
+        enrollments = list(Enrollment.objects.filter(id__in=[e.id for e in enrollments]).select_related('student', 'run__course'))
+        self.assertEqual(managed_enrollment_ids(enrollments), {e.id for e in enrollments if can_manage_run(e.student, e.run)})
+
+
+class GroupPageScalingTests(TestCase):
+    """Teacher, admin and course pages must not grow with the number of students or activities."""
+
+    def build(self, students, lessons):
+        from assessment.models import Assignment, Question, Quiz, QuizAttempt, Submission
+        from codejudge.models import CodeProblem, CodeSubmission, TestCase as CodeCase
+        from django.utils import timezone
+        from .models import Module
+        tag = f'{students}-{lessons}'
+        teacher = User.objects.create(username=f'teacher-{tag}', role='teacher')
+        course = Course.objects.create(title=f'Group {tag}', is_published=True, teacher=teacher)
+        run = CourseRun.objects.create(course=course, kind='cohort', title='G')
+        module = Module.objects.create(course=course, title='M', position=1, is_published=True)
+        problem = CodeProblem.objects.create(course=course, title='P', statement='s')
+        CodeCase.objects.create(problem=problem, stdin='1', expected='1')
+        activities = []
+        for n in range(lessons):
+            lesson = Lesson.objects.create(course=course, module=module, title='L', position=n + 1, is_published=True)
+            quiz = Quiz.objects.create(course=course, title='Q', is_published=True)
+            Question.objects.create(quiz=quiz, body='b', position=1, options=['a', 'b'], correct_index=0)
+            task = Assignment.objects.create(course=course, title='A', is_published=True, due_at=timezone.now())
+            Step.objects.create(lesson=lesson, title='T', position=1, is_published=True)
+            Step.objects.create(lesson=lesson, title='Q', kind='quiz', quiz=quiz, position=2, is_published=True, pass_percent=50)
+            Step.objects.create(lesson=lesson, title='A', kind='assignment', assignment=task, position=3, is_published=True)
+            activities.append((quiz, task))
+        Step.objects.create(lesson=lesson, title='C', kind='code', code_problem=problem, position=4, is_published=True)
+        for n in range(students):
+            student = User.objects.create(username=f'student-{tag}-{n}', role='student')
+            e = Enrollment.objects.create(student=student, course=course, run=run)
+            for quiz, task in activities:
+                QuizAttempt.objects.create(enrollment=e, student=student, quiz=quiz, attempt_no=1, status='finished', score=1, max_score=1,
+                                           deadline_at=timezone.now(), finished_at=timezone.now(), answers={})
+                Submission.objects.create(enrollment=e, student=student, assignment=task, attempt_no=1, status='submitted', reviewer=teacher)
+            CodeSubmission.objects.create(problem=problem, enrollment=e, code='x', status='accepted', passed=1, total=1)
+        return teacher, student, course, run
+
+    def count(self, user, path):
+        from django.db import connection
+        from django.test import Client
+        from django.test.utils import CaptureQueriesContext
+        client = Client()
+        client.force_login(user)
+        client.get(path)  # first call may write snapshots or finalize attempts
+        with CaptureQueriesContext(connection) as captured:
+            self.assertEqual(client.get(path).status_code, 200)
+        return len(captured)
+
+    def pages(self, students, lessons):
+        teacher, student, course, run = self.build(students, lessons)
+        study = f'/api/study/courses/{course.id}/?run_id={run.id}'
+        return {'student course page': self.count(student, study), 'teacher course page': self.count(teacher, study),
+                'course report': self.count(teacher, f'/api/study/courses/{course.id}/report/?run_id={run.id}'),
+                'teacher home': self.count(teacher, '/api/workspace/home/'),
+                'teacher analytics': self.count(teacher, f'/api/analytics/dashboard/?run_id={run.id}')}
+
+    def test_pages_are_constant_in_students_and_activities(self):
+        self.assertEqual(self.pages(2, 1), self.pages(6, 3))
+
+    def test_admin_analytics_is_constant_in_students_and_teachers(self):
+        admin = User.objects.create(username='scale-admin', role='admin')
+        self.build(2, 1)
+        few = self.count(admin, '/api/analytics/dashboard/')
+        self.build(6, 3)
+        self.assertEqual(few, self.count(admin, '/api/analytics/dashboard/'))

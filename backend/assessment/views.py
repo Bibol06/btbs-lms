@@ -48,7 +48,13 @@ def submission_data(s):
             'submitted_at': s.submitted_at, 'score': s.score, 'feedback': s.feedback,
             'graded_at': s.graded_at, 'status': s.status, 'is_late': s.is_late, 'due_at_snapshot': s.due_at_snapshot,
             'review_due_at': s.review_due_at, 'review_state': review_state(s), 'reviewer_id': s.reviewer_id,
-            'reviewer': display_name(s.reviewer) if s.reviewer else None, 'reviewer_role_label': role_label(s.reviewer, teaching=True), 'revision_due_at': s.revision_due_at, 'reviews': [{'action': r.action, 'score': r.score, 'feedback': r.feedback, 'rubric_result': r.rubric_result, 'created_at': r.created_at, 'reviewer__username': r.reviewer.username if r.reviewer else '', 'reviewer': display_name(r.reviewer), 'reviewer_role_label': role_label(r.reviewer, teaching=True), 'revision_due_at': r.revision_due_at} for r in s.reviews.select_related('reviewer').order_by('-id')]}
+            'reviewer': display_name(s.reviewer) if s.reviewer else None, 'reviewer_role_label': role_label(s.reviewer, teaching=True), 'revision_due_at': s.revision_due_at, 'reviews': [{'action': r.action, 'score': r.score, 'feedback': r.feedback, 'rubric_result': r.rubric_result, 'created_at': r.created_at, 'reviewer__username': r.reviewer.username if r.reviewer else '', 'reviewer': display_name(r.reviewer), 'reviewer_role_label': role_label(r.reviewer, teaching=True), 'revision_due_at': r.revision_due_at} for r in reviews_of(s)]}
+
+
+def reviews_of(s):
+    # List views prefetch reviews into s.prefetched_reviews (newest first).
+    reviews = getattr(s, 'prefetched_reviews', None)
+    return reviews if reviews is not None else s.reviews.select_related('reviewer').order_by('-id')
 
 
 def attempt_data(a):
@@ -72,48 +78,75 @@ def course_study(request, course_id):
     manage = can_manage_run(request.user, run)
     finalize_due_attempts(QuizAttempt.objects.filter(quiz__course=course, enrollment__run=run))
     enrollment = Enrollment.objects.filter(run=run, student=request.user).first()
+    if enrollment:
+        enrollment.run = run
     assignments = course.assignments.all()
     quizzes = course.quizzes.all()
     if not manage:
         assignments = assignments.filter(is_published=True)
         quizzes = quizzes.filter(is_published=True)
-    result = []
+    from django.db.models import Count, Exists, Max, OuterRef, Prefetch
+    from courses.models import RunCheckpoint
+    from learning.models import Step
     from learning.services import require_activity_visible
-    for a in assignments.prefetch_related('submissions__student'):
+    from .models import AssignmentExtension
+    # Everything below is loaded once per table: only this run's records (and, for a
+    # student, only their own) instead of every learner's work for every activity.
+    placements = Prefetch('steps', queryset=Step.objects.select_related('lesson__module__prerequisite'))
+    run._module_release_map = {row.module_id: row for row in run.module_releases.all()}
+    run._prerequisite_cache = {}
+    schedules = {('assignment' if row.assignment_id else 'quiz', row.assignment_id or row.quiz_id): row
+                 for row in ActivitySchedule.objects.filter(run=run)}
+    extensions = {x.assignment_id: x for x in AssignmentExtension.objects.filter(enrollment=enrollment)} if enrollment and not manage else {}
+    work = Submission.objects.filter(enrollment__run=run).select_related('student', 'reviewer').prefetch_related(
+        Prefetch('reviews', queryset=GradeReview.objects.select_related('reviewer').order_by('-id'), to_attr='prefetched_reviews'))
+    if not manage:
+        work = work.filter(student=request.user)
+    result = []
+    for a in assignments.prefetch_related(placements, Prefetch('submissions', queryset=work, to_attr='run_submissions')):
         try:
-            require_activity_visible(request.user, a, run, 'assignment')
+            require_activity_visible(request.user, a, run, 'assignment', manager=manage)
         except ApiError:
             continue
-        settings = activity_settings(a, run, 'assignment')
-        submissions = [s for s in a.submissions.all() if s.enrollment.run_id == run.id and (manage or s.student_id == request.user.id)]
+        settings = schedules.get(('assignment', a.id)) or a
         result.append({'id': a.id, 'title': a.title, 'description': a.description,
                        'due_at': settings.due_at, 'allow_late': settings.allow_late, 'cutoff_at': settings.cutoff_at,
-                       'review_hours': settings.review_hours, 'window': submission_window(a, enrollment, settings) if enrollment and not manage else None, 'max_score': a.max_score, 'max_attempts': settings.max_attempts,
-                       'is_published': a.is_published, 'submissions': [submission_data(s) for s in submissions]})
+                       'review_hours': settings.review_hours, 'window': submission_window(a, enrollment, settings, personal=extensions.get(a.id)) if enrollment and not manage else None, 'max_score': a.max_score, 'max_attempts': settings.max_attempts,
+                       'is_published': a.is_published, 'submissions': [submission_data(s) for s in a.run_submissions]})
     quiz_result = []
-    for q in quizzes.prefetch_related('questions', 'attempts'):
+    own_attempts = QuizAttempt.objects.filter(student=request.user, enrollment__run=run)
+    quizzes = quizzes.prefetch_related(placements, 'questions', Prefetch('attempts', queryset=own_attempts, to_attr='own_attempts'),
+                                       Prefetch('checkpoints', queryset=RunCheckpoint.objects.only('id', 'run_id', 'quiz_id')))
+    if manage:
+        quizzes = quizzes.annotate(any_attempts=Exists(QuizAttempt.objects.filter(quiz=OuterRef('pk'))))
+    for q in quizzes:
         try:
-            require_activity_visible(request.user, q, run, 'quiz')
+            require_activity_visible(request.user, q, run, 'quiz', manager=manage)
         except ApiError:
             continue
-        settings = activity_settings(q, run, 'quiz')
+        settings = schedules.get(('quiz', q.id)) or q
+        questions = q.questions.all()
         item = {'id': q.id, 'title': q.title, 'max_attempts': settings.max_attempts,
                 'time_limit_sec': settings.time_limit_sec, 'opens_at': settings.opens_at, 'closes_at': settings.closes_at,
-                'is_published': q.is_published, 'questions_count': len(q.questions.all()),
-                'attempts': [attempt_data(a) for a in q.attempts.all() if a.student_id == request.user.id and a.enrollment.run_id == run.id],
-                'has_attempts': q.attempts.exists() if manage else False}
+                'is_published': q.is_published, 'questions_count': len(questions),
+                'attempts': [attempt_data(a) for a in q.own_attempts],
+                'has_attempts': q.any_attempts if manage else False}
         if manage:
-            item['questions'] = list(q.questions.values('id', 'body', 'options', 'correct_index', 'position'))
+            item['questions'] = [{'id': x.id, 'body': x.body, 'options': x.options, 'correct_index': x.correct_index, 'position': x.position} for x in questions]
         quiz_result.append(item)
-    from codejudge.models import CodeProblem
+    from codejudge.models import CodeProblem, CodeSubmission, TestCase as CodeCase
     code_results = []
-    for problem in CodeProblem.objects.filter(course=course, steps__is_published=True, steps__lesson__is_published=True).distinct():
+    problems = list(CodeProblem.objects.filter(course=course, steps__is_published=True, steps__lesson__is_published=True).distinct().prefetch_related(placements))
+    ids = [p.id for p in problems]
+    case_counts = dict(CodeCase.objects.filter(problem_id__in=ids).values('problem_id').annotate(n=Count('id')).values_list('problem_id', 'n')) if ids else {}
+    best = dict(CodeSubmission.objects.filter(problem_id__in=ids, enrollment__student=request.user, enrollment__run=run)
+                .exclude(status__in=['running', 'service_error']).values('problem_id').annotate(m=Max('passed')).values_list('problem_id', 'm')) if ids else {}
+    for problem in problems:
         try:
-            require_activity_visible(request.user, problem, run, 'code')
+            require_activity_visible(request.user, problem, run, 'code', manager=manage)
         except ApiError:
             continue
-        records = problem.submissions.filter(enrollment__student=request.user, enrollment__run=run).exclude(status__in=['running', 'service_error'])
-        code_results.append({'id': problem.id, 'title': problem.title, 'passed': max(records.values_list('passed', flat=True), default=None), 'total': problem.test_cases.count()})
+        code_results.append({'id': problem.id, 'title': problem.title, 'passed': best.get(problem.id), 'total': case_counts.get(problem.id, 0)})
     from communication.services import teacher_ids
     from django.contrib.auth import get_user_model
     reviewers = [{**identity_data(u, teaching=True), 'first_name': u.first_name, 'last_name': u.last_name} for u in get_user_model().objects.filter(id__in=teacher_ids(run))] if manage else []
@@ -471,18 +504,40 @@ def course_report(request, course_id):
     from codejudge.models import CodeProblem, CodeSubmission
     problems = list(CodeProblem.objects.filter(course=course, steps__is_published=True, steps__lesson__is_published=True).distinct())
     code_submissions = list(CodeSubmission.objects.filter(problem__in=problems, enrollment__run=run).exclude(status__in=['running', 'service_error']))
+    # Best results are grouped once, so the table costs O(records) instead of
+    # O(students x activities x records), and progress is one batch for the whole group.
+    best_score, best_quiz, best_code = {}, {}, {}
+    for s in submissions:
+        if s.score is not None:
+            key = (s.student_id, s.assignment_id)
+            best_score[key] = max(best_score.get(key, s.score), s.score)
+    for a in attempts:
+        key = (a.student_id, a.quiz_id)
+        best_quiz[key] = max(best_quiz.get(key, a.score), a.score)
+    for s in code_submissions:
+        key = (s.enrollment_id, s.problem_id)
+        best_code[key] = max(best_code.get(key, s.passed), s.passed)
+    from learning.services import course_progress_many
+    enrollments = list(course.enrollments.filter(run=run).select_related('student').order_by('student__username'))
+    for enrollment in enrollments:
+        enrollment.run = run
+    progress = course_progress_many(enrollments)
     rows = []
-    for enrollment in course.enrollments.filter(run=run).select_related('student').order_by('student__username'):
+    for enrollment in enrollments:
         student = enrollment.student
-        grades = {str(a.id): max((s.score for s in submissions if s.assignment_id == a.id and s.student_id == student.id and s.score is not None), default=None) for a in assignments}
-        quiz_grades = {str(q.id): max((a.score for a in attempts if a.quiz_id == q.id and a.student_id == student.id), default=None) for q in quizzes}
         rows.append({'student_id': student.id, 'student': student.username,
                      'display_name': display_name(student), 'role_label': role_label(student), 'status': enrollment.status, 'last_seen_at': enrollment.last_seen_at,
-                     'progress': progress_data(course, student.id, run), 'assignments': grades, 'quizzes': quiz_grades,
-                     'code': {str(p.id): max((s.passed for s in code_submissions if s.problem_id == p.id and s.enrollment_id == enrollment.id), default=None) for p in problems}})
+                     'progress': {key: progress[enrollment.id][key] for key in ('completed', 'total', 'percent')}, 'assignments': {str(a.id): best_score.get((student.id, a.id)) for a in assignments},
+                     'quizzes': {str(q.id): best_quiz.get((student.id, q.id)) for q in quizzes},
+                     'code': {str(p.id): best_code.get((enrollment.id, p.id)) for p in problems}})
+    from django.db.models import Count
+    from codejudge.models import TestCase as CodeCase
+    from .models import Question
+    question_counts = dict(Question.objects.filter(quiz__in=quizzes).values('quiz_id').annotate(n=Count('id')).values_list('quiz_id', 'n')) if quizzes else {}
+    case_counts = dict(CodeCase.objects.filter(problem__in=problems).values('problem_id').annotate(n=Count('id')).values_list('problem_id', 'n')) if problems else {}
     return JsonResponse({'students': rows, 'assignments': [{'id': a.id, 'title': a.title, 'max_score': a.max_score} for a in assignments],
-                         'quizzes': [{'id': q.id, 'title': q.title, 'max_score': q.questions.count()} for q in quizzes],
-                         'code_problems': [{'id': p.id, 'title': p.title, 'max_score': p.test_cases.count()} for p in problems]})
+                         'quizzes': [{'id': q.id, 'title': q.title, 'max_score': question_counts.get(q.id, 0)} for q in quizzes],
+                         'code_problems': [{'id': p.id, 'title': p.title, 'max_score': case_counts.get(p.id, 0)} for p in problems]})
 
 
 @require_http_methods(['PUT'])

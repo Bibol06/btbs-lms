@@ -5,7 +5,7 @@ from accounts.identity import display_name
 from common import ApiError
 from courses.access import can_teach, is_platform_admin
 from courses.models import Course, Enrollment
-from assessment.deadline_views import managed_runs, student_tasks, pending_reviews, review_item
+from assessment.deadline_views import managed_runs, student_tasks, pending_reviews, review_item, load_task_sources, tasks_by_enrollment
 from communication.models import Comment
 from communication.presentation import comment_content
 from assessment.models import GradeReview, QuizAttempt
@@ -66,16 +66,31 @@ def attention_rows(user, runs):
             eid = r.get('enrollment_id') or r['conversation__enrollment_id']
             activity[eid] = max(activity.get(eid) or r['last'], r['last'])
     comments = {(r['discussion__run_id'], r['author_id']): r['last'] for r in Comment.objects.filter(discussion__run__in=runs).values('discussion__run_id', 'author_id').annotate(last=Max('created_at'))}
+    enrollments = [e for e in Enrollment.objects.filter(run__in=runs, status='active', course__is_published=True).select_related('run', 'course', 'student')
+                   if not ((e.run.starts_at and e.run.starts_at > now) or (e.run.ends_at and e.run.ends_at <= now))]
+    # Deadlines and quiz results are computed for all students at once, not per enrollment.
+    missing = {e.id for e in enrollments if (policies[e.run_id].missing_count if e.run_id in policies else 2)}
+    tasks = {}
+    if missing:
+        from courses.access import managed_enrollment_ids
+        sources = load_task_sources(Enrollment.objects.filter(id__in=missing).select_related('course', 'run__course', 'student'))
+        tasks = tasks_by_enrollment(sources, managed_enrollment_ids, timezone.now())
+    low_score = [e for e in enrollments if e.run_id in policies and policies[e.run_id].low_score_percent]
+    latest_scores, diagnostic = {}, {}
+    if low_score:
+        from learning.services import visible_steps
+        for course in {e.course_id: e.course for e in low_score}.values():
+            placements = visible_steps(course).exclude(quiz=None)
+            diagnostic[course.id] = set(placements.filter(pass_percent=0).values_list('quiz_id', flat=True)) - set(placements.filter(pass_percent__gt=0).values_list('quiz_id', flat=True))
+        for a in QuizAttempt.objects.filter(enrollment__in=low_score, status='finished', max_score__gt=0).order_by('enrollment_id', 'quiz_id', '-finished_at', '-id'):
+            latest_scores.setdefault(a.enrollment_id, {}).setdefault(a.quiz_id, 100*a.score/a.max_score)
     rows = []
-    for e in Enrollment.objects.filter(run__in=runs, status='active', course__is_published=True).select_related('run', 'course', 'student'):
-        if (e.run.starts_at and e.run.starts_at > now) or (e.run.ends_at and e.run.ends_at <= now):
-            continue
+    for e in enrollments:
         policy = policies.get(e.run_id)
-        missing_limit = policy.missing_count if policy else 2
         reasons = []
-        if missing_limit:
-            missed = [t for t in student_tasks(e.student, [e.id]) if t['kind'] != 'module' and t.get('due_at') and t['due_at'] < now and t['state'] not in ['graded', 'waiting', 'not_started']]
-            if len(missed) >= missing_limit:
+        if e.id in missing:
+            missed = [t for t in tasks[e.id] if t['kind'] != 'module' and t.get('due_at') and t['due_at'] < now and t['state'] not in ['graded', 'waiting', 'not_started']]
+            if len(missed) >= (policy.missing_count if policy else 2):
                 reasons.append(f'Не завершено в срок заданий: {len(missed)}')
         if policy and policy.inactive_days and coverage:
             since = max(v for v in [e.last_seen_at, activity.get(e.id), comments.get((e.run_id, e.student_id)), e.enrolled_at, e.run.starts_at, coverage.started_at] if v)
@@ -83,14 +98,7 @@ def attention_rows(user, runs):
             if days >= policy.inactive_days:
                 reasons.append(f'Нет наблюдаемой активности в курсе {days} дн.')
         if policy and policy.low_score_percent:
-            from learning.services import visible_steps
-            placements = visible_steps(e.course).exclude(quiz=None)
-            diagnostic = set(placements.filter(pass_percent=0).values_list('quiz_id', flat=True)) - set(placements.filter(pass_percent__gt=0).values_list('quiz_id', flat=True))
-            attempts = QuizAttempt.objects.filter(enrollment=e, status='finished', max_score__gt=0).exclude(quiz_id__in=diagnostic).order_by('quiz_id', '-finished_at', '-id')
-            latest, scores = set(), []
-            for a in attempts:
-                if a.quiz_id not in latest:
-                    latest.add(a.quiz_id); scores.append(100*a.score/a.max_score)
+            scores = [score for quiz_id, score in latest_scores.get(e.id, {}).items() if quiz_id not in diagnostic[e.course_id]]
             if scores and sum(scores)/len(scores) < policy.low_score_percent:
                 reasons.append(f'Средний результат последних тестов: {round(sum(scores)/len(scores))}%')
         if reasons:

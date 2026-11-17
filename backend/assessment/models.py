@@ -65,6 +65,9 @@ class Submission(EnrollmentBound):
     class Meta:
         ordering = ['-submitted_at', '-id']
         constraints = [models.UniqueConstraint(fields=['assignment', 'enrollment', 'attempt_no'], name='unique_submission_attempt_run')]
+        # Review queue and admin overview read only work awaiting review (a small share of all
+        # submissions), often with a review-deadline filter.
+        indexes = [models.Index(fields=['review_due_at'], condition=Q(status='submitted'), name='submission_awaiting_review')]
 
 
 class Quiz(models.Model):

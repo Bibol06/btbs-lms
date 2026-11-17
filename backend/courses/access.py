@@ -36,6 +36,21 @@ def managed_run_ids(user, runs):
     return {run.id for run in runs if run.course.teacher_id == user.id or run.course_id in team or run.id in taught}
 
 
+def managed_enrollment_ids(enrollments):
+    """Batch can_manage_run(e.student, e.run) for enrollments of many students (two queries).
+
+    Enrollments need student and run.course loaded."""
+    enrollments = [e for e in enrollments if e.student.is_authenticated and e.student.is_active]
+    if not enrollments:
+        return set()
+    from .models import CourseMember, CourseRun
+    students = {e.student_id for e in enrollments}
+    team = set(CourseMember.objects.filter(user_id__in=students, course_id__in={e.run.course_id for e in enrollments}).values_list('user_id', 'course_id'))
+    taught = set(CourseRun.teachers.through.objects.filter(user_id__in=students, courserun_id__in={e.run_id for e in enrollments}).values_list('user_id', 'courserun_id'))
+    return {e.id for e in enrollments if is_platform_admin(e.student) or e.run.course.teacher_id == e.student_id
+            or (e.student_id, e.run.course_id) in team or (e.student_id, e.run_id) in taught}
+
+
 def is_enrolled(user, course, run=None):
     if not user.is_authenticated or not user.is_active:
         return False
