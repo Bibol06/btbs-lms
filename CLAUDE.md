@@ -17,6 +17,8 @@ Backend (run from `backend/`, Windows venv at `.venv/Scripts/`):
 .venv/Scripts/python.exe manage.py setup_code_runner                                # downloads the WASI Python runtime; sandbox tests are skipped without it
 ```
 
+Dependencies: edit the ranges in `requirements*.txt`, then run `.venv/Scripts/python.exe lock_requirements.py` (add `-P <pkg>` to upgrade a package) to regenerate the hashed `requirements.lock` (Docker image) and `requirements-dev.lock` (CI, local venv: `pip install --require-hashes -r requirements-dev.lock`). CI fails if a lock is stale or if pip-audit finds a vulnerability.
+
 Always use `config.test_settings` for tests: it forces local media storage, disables Redis, S3 backup upload and Sentry, and leaves Celery without a broker, so tasks run inline.
 
 Frontend (from `frontend/`): `npm run dev` (Vite on 127.0.0.1:5173 proxies `/api` to :8000), `npm run lint`, `npm run build` (runs `tsc -b`). There is no frontend test runner.

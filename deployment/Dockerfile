@@ -1,8 +1,9 @@
 FROM python:3.13-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
-COPY backend/requirements.txt backend/requirements-share.txt backend/requirements-cache.txt backend/requirements-server.txt ./
-RUN pip install --no-cache-dir -r requirements-share.txt -r requirements-cache.txt -r requirements-server.txt
+# Exact versions with hashes (backend/lock_requirements.py); pip refuses any other file.
+COPY backend/requirements.lock ./
+RUN pip install --no-cache-dir --require-hashes -r requirements.lock
 COPY backend/ ./
 RUN useradd --uid 10001 --create-home lms
 USER lms
