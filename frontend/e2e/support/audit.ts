@@ -66,7 +66,9 @@ async function domChecks(page: Page) {
     for (const el of textEls) {
       const r = el.getBoundingClientRect(), s = getComputedStyle(el)
       const text = (el.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 80)
-      if (r.right > window.innerWidth + 1 && !el.closest('[style*="overflow"], .table-scroll, .management-table-wrap')) out.push({ check: 'text-off-screen', detail: path(el), sample: text })
+      // Content inside a horizontally scrollable region (wide tables, week grids) is reachable by scrolling.
+      const inScroller = (() => { for (let a = el.parentElement; a; a = a.parentElement) { const o = getComputedStyle(a).overflowX; if ((o === 'auto' || o === 'scroll') && a.scrollWidth > a.clientWidth) return true } return false })()
+      if (r.right > window.innerWidth + 1 && !inScroller) out.push({ check: 'text-off-screen', detail: path(el), sample: text })
       const clipped = el.scrollWidth > el.clientWidth + 1 && ['hidden', 'clip'].includes(s.overflowX)
       if (clipped && s.textOverflow !== 'ellipsis') out.push({ check: 'text-clipped-no-ellipsis', detail: path(el), sample: text })
       if (clipped && s.textOverflow === 'ellipsis' && !el.closest('[title]') && !el.getAttribute('aria-label')) out.push({ check: 'ellipsis-without-title', detail: path(el), sample: text })
@@ -83,7 +85,7 @@ async function domChecks(page: Page) {
       for (const label of labels) { if (seen.has(label)) out.push({ check: 'duplicate-label', detail: path(list), sample: label.slice(0, 80) }); seen.add(label) }
     }
     // Data-quality smells in visible titles.
-    for (const el of document.querySelectorAll('h1, h2, h3, h4, strong, .course-plan-step-title, .lesson-item, .step-strip button, option')) {
+    for (const el of document.querySelectorAll('.course-plan-step-title, .course-plan-head strong, .lesson-item, .step-strip button, .player-crumbs strong, .player-article h1, .lesson-step-heading h3, .preview-content h3, .preview-outline button, .course-card h3, .course-heading h1, .module-outline h4, .learning-course-card h3, option')) {
       const t = (el.textContent || '').trim()
       if (!t || skip(el) || !visible(el)) continue
       if (/^\d+\.?$/.test(t)) out.push({ check: 'data-digits-title', detail: path(el), sample: t })

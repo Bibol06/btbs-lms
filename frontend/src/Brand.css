@@ -396,3 +396,18 @@ pre { background: var(--surface-subtle); color: var(--text); line-height: 1.6; b
 @media (max-width: 544px) {
   .content button, .login-card button, .lesson-player button, .primary-link, .button-link { white-space: normal; text-align: center; }
 }
+/* Wide tables scroll inside their card. Edge shadows appear only while there is more to scroll
+   (background-attachment: local covers them at the ends), and the region is keyboard-focusable (QA-010/011). */
+:is(.table-scroll, .management-table-wrap, .users-table-wrap, .analytics-table-wrap) {
+  overflow-x: auto; max-width: 100%;
+  background:
+    linear-gradient(to right, var(--surface) 30%, rgba(255, 255, 255, 0)) left center / 40px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 30%, rgba(255, 255, 255, 0)) right center / 40px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgba(16, 37, 66, .18), transparent) left center / 12px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgba(16, 37, 66, .18), transparent) right center / 12px 100% no-repeat scroll,
+    var(--surface);
+}
+:is(.table-scroll, .management-table-wrap, .users-table-wrap, .analytics-table-wrap):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Tab rows scroll sideways on narrow screens instead of truncating tab labels. */
+.course-tabs, .analytics-tabs, .practice-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.content :is(.course-tabs, .analytics-tabs) button { flex-shrink: 0; max-width: none; overflow: visible; text-overflow: clip; }

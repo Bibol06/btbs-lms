@@ -303,7 +303,7 @@ async function deleteStudent(user: User) {
       {error && <p className="users-error">{tr(error)}</p>}
 
       {!loading && !error && (
-        <div className="users-table-wrap">
+        <div className="users-table-wrap" tabIndex={0} role="region" aria-label={tr("Таблица прокручивается по горизонтали")}>
           <table className="users-table">
             <thead>
               <tr>
