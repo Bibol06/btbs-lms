@@ -81,6 +81,10 @@ code, kbd, pre, samp { font-family: var(--font-mono); }
 .content button.danger:hover:not(:disabled), .lesson-player button.danger:hover:not(:disabled) { background: var(--danger-bg); border-color: var(--danger); }
 .content button:disabled, .login-card button:disabled, .lesson-player button:disabled { opacity: .5; cursor: not-allowed; }
 .content button.small { min-height: var(--ctl-sm); padding: 0 10px; font-size: var(--fs-small); }
+/* A one-line label may never widen its container (QA-012). */
+.content button, .lesson-player button { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+/* Buttons that carry content titles (outline items, preview steps, plan rows) wrap instead (QA-012/013). */
+.content :is(.lesson-item, .preview-outline button, .course-plan-step, .course-plan-head), .lesson-player :is(.course-plan-step, .course-plan-head) { white-space: normal; overflow-wrap: anywhere; min-width: 0; text-align: left; }
 .primary-link, .button-link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--ctl-md); padding: 0 var(--sp-4); border: 1px solid var(--border-strong); border-radius: var(--r-ctl); text-decoration: none; font-size: var(--fs-body); line-height: 20px; font-weight: 500; white-space: nowrap; color: var(--text); background: var(--surface); transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease); }
 .button-link:hover { background: var(--surface-subtle); border-color: var(--border-hover); color: var(--text); }
 .primary-link { background: var(--primary); color: #fff; border-color: var(--primary); }
