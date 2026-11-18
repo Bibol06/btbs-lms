@@ -85,6 +85,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
-      - name: Dependency vulnerability audit
+      - name: Audit packages shipped to the browser (blocking)
+        run: npm audit --audit-level=high --omit=dev
+      - name: Audit build tooling (report only; picomatch has no fixed release yet)
         continue-on-error: true
         run: npm audit --audit-level=high

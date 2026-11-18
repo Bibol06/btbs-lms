@@ -21,6 +21,58 @@ from .tasks import judge_submission, practice_run, practice_key, practice_busy_k
 CAPACITY = threading.BoundedSemaphore(settings.LMS_CODEJUDGE_SLOTS)
 
 
+def string_list(data, key, max_items, max_length):
+    values = data.get(key, [])
+    if not isinstance(values, list) or len(values) > max_items or any(not isinstance(v, str) for v in values):
+        raise ApiError(f'Поле {key}: список до {max_items} строк')
+    values = [v.strip() for v in values if v.strip()]
+    if any(len(v) > max_length for v in values):
+        raise ApiError(f'Поле {key}: строка длиннее {max_length} символов')
+    return values
+
+
+def practice_values(data):
+    return {'context': raw_text(data, 'context', 10000).strip(), 'instructions': string_list(data, 'instructions', 10, 500),
+            'hints': string_list(data, 'hints', 5, 2000)}
+
+
+def lesson_slides(user, problem, run):
+    """PDF materials of the module(s) where the problem is placed, as the learner may open them.
+
+    Same visibility as open_material: published, unlocked lessons for learners; everything for managers."""
+    from django.db.models import Q
+    from learning.models import LessonMaterial
+    from learning.services import require_lesson_visible
+    manager = can_manage_run(user, run)
+    placements = problem.steps.select_related('lesson')
+    if not manager:
+        placements = placements.filter(is_published=True, lesson__is_published=True)
+    placements = list(placements)
+    modules = {s.lesson.module_id for s in placements if s.lesson.module_id}
+    lessons = {s.lesson_id for s in placements}
+    if not placements:
+        return []
+    materials = (LessonMaterial.objects.filter(is_inline=False, file__iendswith='.pdf', lesson__course_id=problem.course_id)
+                 .filter(Q(lesson__module_id__in=modules) | Q(lesson_id__in=lessons))
+                 .select_related('lesson__module__prerequisite').order_by('lesson__position', 'lesson_id', 'id'))
+    run._prerequisite_cache = {}
+    visible, result = {}, []
+    for material in materials:
+        lesson = material.lesson
+        if lesson.id not in visible:
+            try:
+                if not manager and not lesson.is_published:
+                    raise ApiError('Урок не опубликован', 404)
+                require_lesson_visible(user, lesson, run, manager=manager)
+                visible[lesson.id] = True
+            except ApiError:
+                visible[lesson.id] = False
+        if visible[lesson.id]:
+            result.append({'id': material.id, 'title': material.title, 'lesson': lesson.title,
+                           'url': f'/api/learning/materials/{material.id}/open/?run_id={run.id}'})
+    return result
+
+
 @require_http_methods(['GET', 'POST'])
 @api
 def problems(request, course_id):
@@ -39,9 +91,10 @@ def problems(request, course_id):
             if not isinstance(case, dict):
                 raise ApiError('Неверный формат теста')
             values.append({'stdin': raw_text(case, 'stdin', 10000), 'expected': raw_text(case, 'expected', 10000), 'is_sample': boolean(case, 'is_sample', False)})
+        practice = practice_values(data)
         with transaction.atomic():
             problem = CodeProblem.objects.create(course=course, title=text(data, 'title', 200, True), statement=text(data, 'statement', 30000, True),
-                starter_code=raw_text(data, 'starter_code', 20000), max_attempts=integer(data, 'max_attempts', 1, 100, 20))
+                starter_code=raw_text(data, 'starter_code', 20000), max_attempts=integer(data, 'max_attempts', 1, 100, 20), **practice)
             TestCase.objects.bulk_create([TestCase(problem=problem, position=i+1, **case) for i, case in enumerate(values)])
         return JsonResponse({'id': problem.id}, status=201)
     return JsonResponse({'problems': list(CodeProblem.objects.filter(course=course).values('id', 'title'))})
@@ -73,6 +126,8 @@ def problem_detail(request, problem_id):
             if not isinstance(values, list) or not 1 <= len(values) <= 20 or any(not isinstance(v, dict) for v in values):
                 raise ApiError('Добавьте от 1 до 20 тестов')
             cases = [{'stdin': raw_text(v, 'stdin', 10000), 'expected': raw_text(v, 'expected', 10000), 'is_sample': boolean(v, 'is_sample', False)} for v in values]
+            for key, value in practice_values(data).items():
+                setattr(problem, key, value)
             problem.title = text(data, 'title', 200, True)
             problem.statement = text(data, 'statement', 30000, True)
             problem.starter_code = raw_text(data, 'starter_code', 20000)
@@ -84,7 +139,9 @@ def problem_detail(request, problem_id):
     submissions = problem.submissions.filter(enrollment__run=run, enrollment__student=request.user).order_by('-id')
     return JsonResponse({'problem': {'id': problem.id, 'title': problem.title, 'statement': problem.statement,
         'starter_code': problem.starter_code, 'max_attempts': problem.max_attempts,
+        'context': problem.context, 'instructions': problem.instructions, 'hints': problem.hints,
         'samples': list(problem.test_cases.filter(is_sample=True).values('stdin', 'expected'))},
+        'slides': lesson_slides(request.user, problem, run),
         'submissions': list(submissions.values('id', 'status', 'passed', 'total', 'details', 'created_at')[:30]),
         'editor': {'can_edit': not problem.submissions.exclude(status='service_error').exists(), 'test_cases': list(problem.test_cases.values('stdin', 'expected', 'is_sample'))} if can_manage_course(request.user, problem.course) else None,
         'can_manage': can_manage_run(request.user, run),

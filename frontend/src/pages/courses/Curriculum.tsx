@@ -12,9 +12,12 @@ import { apiRequest } from '../../api'
 import { errorMessage, formatDate } from '../study/types'
 import StudyPanel from '../study/StudyPanel'
 import CodeExercise from '../study/CodeExercise'
+import PracticeFields from '../study/PracticeFields'
+import { practiceValues } from '../study/practiceValues'
 import { QuizEditor } from '../study/Quizzes'
 import { loadStepChoices, type StepChoices } from './stepChoices'
 import ConfirmAction from '../study/ConfirmAction'
+import LessonPlayer, { CoursePlan } from './LessonPlayer'
 import TeacherMediaUploader from '../teacher/TeacherMediaUploader'
 import { Discussion } from '../communication/Communication'
 
@@ -22,7 +25,7 @@ type StepInfo = { id: number; title: string; kind: string; position: number; is_
 type LessonInfo = { id: number; title: string; position: number; is_published: boolean; locked_reason: string; steps: StepInfo[] }
 type ModuleInfo = { id: number; title: string; position: number; is_published: boolean; opens_at: string | null; due_at?: string | null; deadline_state?: string | null; prerequisite_id: number | null; lessons: LessonInfo[] }
 type Structure = { modules: ModuleInfo[]; last_step_id: number | null; can_edit: boolean; can_manage: boolean; progress: { total: number; completed: number; percent: number } }
-type StepDetail = { id: number; lesson_id: number; title: string; kind: string; content: string; video_url: string; is_published: boolean; required: boolean; pass_percent: number; material_id: number | null; assignment_id: number | null; quiz_id: number | null; code_problem_id: number | null; material: { id: number; title: string; url: string; kind: string; filename?: string } | null; completed: boolean }
+type StepDetail = { id: number; lesson_id: number; title: string; kind: string; content: string; video_url: string; transcript: string; is_published: boolean; required: boolean; pass_percent: number; material_id: number | null; assignment_id: number | null; quiz_id: number | null; code_problem_id: number | null; material: { id: number; title: string; url: string; kind: string; filename?: string } | null; completed: boolean }
 type Editor = { kind: 'module'; initial?: ModuleInfo } | { kind: 'lesson'; module: ModuleInfo; initial?: LessonInfo } | { kind: 'step'; lesson: LessonInfo; initial?: StepDetail }
 
 function CodeProblemBuilder({ courseId, runId, onCreated }: { courseId: number; runId: number; onCreated: (id: number) => void }) {
@@ -32,11 +35,11 @@ function CodeProblemBuilder({ courseId, runId, onCreated }: { courseId: number; 
   async function save(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); e.stopPropagation(); const data = new FormData(e.currentTarget); setBusy(true)
     try {
-      const result = await apiRequest<{ id: number }>(`/api/code/courses/${courseId}/problems/?run_id=${runId}`, 'POST', { title: data.get('title'), statement: data.get('statement'), starter_code: data.get('starter_code'), max_attempts: Number(data.get('max_attempts')), test_cases: cases })
+      const result = await apiRequest<{ id: number }>(`/api/code/courses/${courseId}/problems/?run_id=${runId}`, 'POST', { title: data.get('title'), statement: data.get('statement'), starter_code: data.get('starter_code'), max_attempts: Number(data.get('max_attempts')), test_cases: cases, ...practiceValues(data) })
       onCreated(result.id)
     } catch (err) { setError(errorMessage(err)) } finally { setBusy(false) }
   }
-  return <form className="study-form" onSubmit={save}><h3>{tr("Новая задача Python")}</h3><label>{tr("Название задачи")}<input name="title" required maxLength={200} /></label><label>{tr("Условие задачи")}<textarea name="statement" rows={5} required maxLength={30000} /></label><label>{tr("Начальный код")}<textarea className="code-editor" name="starter_code" rows={4} maxLength={20000} /></label><label>{tr("Лимит отправок")}<input type="number" min={1} max={100} name="max_attempts" defaultValue={20} required /></label>
+  return <form className="study-form" onSubmit={save}><h3>{tr("Новая задача Python")}</h3><label>{tr("Название задачи")}<input name="title" required maxLength={200} /></label><label>{tr("Условие задачи")}<textarea name="statement" rows={5} required maxLength={30000} /></label><PracticeFields /><label>{tr("Начальный код")}<textarea className="code-editor" name="starter_code" rows={4} maxLength={20000} /></label><label>{tr("Лимит отправок")}<input type="number" min={1} max={100} name="max_attempts" defaultValue={20} required /></label>
     {cases.map((c, i) => <fieldset key={i}><legend>{tr("Проверочный тест ")}{i+1}</legend><div className="form-grid"><label>{tr("Ввод")}<textarea value={c.stdin} onChange={e => setCases(current => current.map((v, j) => j === i ? { ...v, stdin: e.target.value } : v))} maxLength={10000} /></label><label>{tr("Ожидаемый вывод")}<textarea value={c.expected} onChange={e => setCases(current => current.map((v, j) => j === i ? { ...v, expected: e.target.value } : v))} maxLength={10000} /></label></div><label className="check"><input type="checkbox" checked={c.is_sample} onChange={e => setCases(current => current.map((v, j) => j === i ? { ...v, is_sample: e.target.checked } : v))} /> {tr(" Показывать этот пример студенту")}</label>{cases.length > 1 && <button type="button" className="danger" onClick={() => setCases(current => current.filter((_, j) => j !== i))}>{tr("Удалить тестовый пример")}</button>}</fieldset>)}
     <button type="button" className="secondary" disabled={cases.length >= 20} onClick={() => setCases(current => [...current, { stdin: '', expected: '', is_sample: false }])}>{tr("+ Тестовый пример")}</button>{error && <p role="alert" className="error">{tr(error)}</p>}<button disabled={busy}>{tr("Создать задачу Python")}</button>
   </form>
@@ -81,7 +84,7 @@ function CurriculumEditor({ courseId, runId, editor, modules, onSaved, onCancel 
           title: data.get('title'), is_published: data.has('published'), module_id: Number(data.get('module_id')), ...(editor.initial ? {} : { content: data.get('content') || '' }) })
       } else {
         const result = await apiRequest<{ id?: number; step?: { id: number } }>(editor.initial ? `/api/learning/steps/${editor.initial.id}/?run_id=${runId}` : `/api/learning/lessons/${editor.lesson.id}/steps/`, editor.initial ? 'PATCH' : 'POST', {
-          title: data.get('title'), kind, content: data.get('content') || '', video_url: data.get('video_url') || '',
+          title: data.get('title'), kind, content: data.get('content') || '', video_url: data.get('video_url') || '', ...(kind === 'video' ? { transcript: data.get('transcript') || '' } : {}),
           is_published: data.has('published'), required: data.has('required'), pass_percent: Number(data.get('pass_percent') ?? 60),
           assignment_id: kind === 'assignment' ? Number(data.get('assignment_id')) : null,
           quiz_id: kind === 'quiz' ? quizId : null,
@@ -111,7 +114,8 @@ function CurriculumEditor({ courseId, runId, editor, modules, onSaved, onCancel 
       {editor.kind === 'step' && <>
         <label>{tr("Тип шага")}<select value={kind} disabled={busy || uploadingContent} onChange={e => setKind(e.target.value)}><option value="text">{tr("Текст")}</option><option value="video">{tr("Видео")}</option><option value="file">{tr("Файл")}</option><option value="assignment">{tr("Домашнее задание")}</option><option value="quiz">{tr("Тест")}</option><option value="code">{tr("Задача Python")}</option></select></label>
         {kind === 'text' && <LessonContentEditor label={tr('Содержание шага')} lessonId={editor.lesson.id} runId={runId} value={contentDraft} onChange={setContentDraft} maxLength={100000} rows={12} onUploadingChange={setUploadingContent} />}
-        {kind === 'video' && <label>{tr("Ссылка на видео")}<input type="url" name="video_url" defaultValue={editor.initial?.video_url} required maxLength={200} /></label>}
+        {kind === 'video' && <><label>{tr("Ссылка на видео (YouTube или файл .mp4)")}<input type="url" name="video_url" defaultValue={editor.initial?.video_url} required maxLength={200} /></label>
+          <label>{tr("Транскрипт: строка «00:00 Заголовок» начинает главу, ниже — её текст")}<textarea name="transcript" rows={8} maxLength={50000} defaultValue={editor.initial?.transcript} placeholder={'00:00 Привет, Python!\nВ этом уроке…\n00:35 Переменные\n…'} /></label></>}
         {kind === 'file' && <label>{tr("Материал урока")}<select name="material_id" defaultValue={editor.initial?.material_id ?? ''} required><option value="">{tr("Выберите загруженный файл")}</option>{choices.materials.map(v => <option key={v.id} value={v.id}>{ct(v, "title")}</option>)}</select></label>}
         {kind === 'assignment' && <label>{tr("Задание")}<select name="assignment_id" defaultValue={editor.initial?.assignment_id ?? ''} required><option value="">{tr("Выберите задание из раздела «Задания»")}</option>{choices.assignments.map(v => <option key={v.id} value={v.id}>{ct(v, "title")}</option>)}</select></label>}
         {kind === 'quiz' && <>
@@ -137,7 +141,7 @@ function CurriculumEditor({ courseId, runId, editor, modules, onSaved, onCancel 
   </div>
 }
 
-export default function Curriculum({ courseId, runId, navigationHost, onNavigate }: { courseId: number; runId: number; navigationHost?: HTMLElement | null; onNavigate?: () => void }) {
+export default function Curriculum({ courseId, runId, courseTitle = '', navigationHost, onNavigate }: { courseId: number; runId: number; courseTitle?: string; navigationHost?: HTMLElement | null; onNavigate?: () => void }) {
   const [structure, setStructure] = useState<Structure | null>(null)
   const [lastCheckedAt, setLastCheckedAt] = useState(() => Date.now())
   const [selectedId, setSelectedId] = useState<number | null>(() => Number(new URLSearchParams(location.hash.slice(1)).get('step')) || null)
@@ -148,12 +152,15 @@ export default function Curriculum({ courseId, runId, navigationHost, onNavigate
   const [outlineCollapsed, setOutlineCollapsed] = useState(false)
   const [editor, setEditor] = useState<Editor | null>(null)
   const [error, setError] = useState('')
+  // Learners study in the full-screen player; editors open it on demand (null = not decided yet).
+  const [playerOpen, setPlayerOpen] = useState<boolean | null>(null)
   const refresh = () => setRevision(v => v + 1)
   useEffect(() => {
     let alive = true
     apiRequest<Structure>(`/api/learning/courses/${courseId}/structure/?run_id=${runId}`).then(data => {
       if (alive) {
         setStructure(data); setLastCheckedAt(Date.now()); setError('')
+        setPlayerOpen(current => current ?? !data.can_manage)
         const all = data.modules.flatMap(m => m.lessons.flatMap(l => l.steps))
         const route = new URLSearchParams(location.hash.slice(1))
         const requestedLesson = data.modules.flatMap(m => m.lessons).find(l => l.id === Number(route.get('lesson')))
@@ -188,6 +195,26 @@ export default function Curriculum({ courseId, runId, navigationHost, onNavigate
   const module = structure.modules.find(m => m.lessons.some(l => l.id === lesson?.id))
   const currentIndex = all.findIndex(s => s.id === selectedId)
   const select = (id: number) => { setStep(null); setSelectedId(id); setVisitId(crypto.randomUUID()); onNavigate?.() }
+  async function complete(id: number) {
+    try { await apiRequest(`/api/learning/steps/${id}/complete/?run_id=${runId}`, 'POST', { completed: true }); refresh(); return true }
+    catch (err) { setError(errorMessage(err)); return false }
+  }
+  const openAt = (id: number | null) => { if (id) select(id); setPlayerOpen(true) }
+  if (playerOpen && all.length > 0) {
+    return <LessonPlayer courseTitle={courseTitle} courseId={courseId} runId={runId} modules={structure.modules} step={step} selectedId={selectedId}
+      canManage={structure.can_manage} error={error} onSelect={select} onComplete={complete} onRefresh={refresh} onExit={() => setPlayerOpen(false)}
+      openDiscussion={Boolean(new URLSearchParams(location.hash.slice(1)).get('comment'))} />
+  }
+  if (!structure.can_manage) {
+    const resume = all.find(s => s.id === selectedId && !s.locked) ?? all.find(s => !s.locked && !s.completed) ?? all.find(s => !s.locked)
+    const done = structure.progress
+    return <section className="course-start">
+      <div className="course-start-hero"><div><h2>{courseTitle || tr("Программа курса")}</h2><p className="muted">{tr("Пройдено ")}{done.completed}/{done.total} {tr(" обязательных шагов · ")}{done.percent}%</p></div>
+        {resume && <button onClick={() => openAt(resume.id)}>{done.completed ? tr("Продолжить обучение →") : tr("Начать обучение →")}</button>}</div>
+      {error && <p className="error" role="alert">{tr(error)}</p>}
+      <CoursePlan modules={structure.modules} selectedId={selectedId} onSelect={openAt} />
+    </section>
+  }
   async function move(kind: string, ids: number[], id: number, direction: number, parentId?: number) {
     const index = ids.indexOf(id); const next = index + direction
     if (next < 0 || next >= ids.length) return
@@ -206,6 +233,7 @@ export default function Curriculum({ courseId, runId, navigationHost, onNavigate
     {navigationHost && createPortal(outline, navigationHost)}
     <div className="lesson-progress">{structure.can_manage ? <strong>{tr("Программа курса · ")}{structure.progress.total} {tr("обязательных шагов")}</strong> : <><strong>{tr("Пройдено ")}{structure.progress.completed}/{structure.progress.total} {tr(" обязательных шагов · ")}{structure.progress.percent}%</strong><progress max={100} value={structure.progress.percent} /></>}</div>
     {error && <p className="error" role="alert">{tr(error)}</p>}
+    {all.length > 0 && <div className="editor-switch"><button className="secondary" onClick={() => setPlayerOpen(true)}>{tr("▶ Открыть урок как ученик")}</button></div>}
     {structure.can_edit && <div className="editor-switch"><button className="secondary" onClick={() => { setEditing(v => !v); setEditor(null) }}>{editing ? tr("Завершить редактирование") : tr("Редактировать программу")}</button></div>}
     {structure.can_edit && editing && <div className="action-row"><button onClick={() => setEditor({ kind: 'module' })}>{tr("+ Модуль")}</button></div>}
     {editor && <CurriculumEditor key={`${editor.kind}-${editor.initial?.id ?? 'new'}-${editor.kind === 'lesson' ? editor.module?.id : editor.kind === 'step' ? editor.lesson.id : ''}`} courseId={courseId} runId={runId} editor={editor} modules={structure.modules} onSaved={id => { setEditor(null); if (id) setSelectedId(id); refresh() }} onCancel={() => setEditor(null)} />}

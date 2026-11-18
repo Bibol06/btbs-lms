@@ -7,6 +7,11 @@ class CodeProblem(models.Model):
     statement = models.TextField()
     starter_code = models.TextField(blank=True)
     max_attempts = models.PositiveIntegerField(default=20)
+    # Practice screen: background ("what is already prepared"), a short checklist of
+    # what to do, and hints the learner can reveal one by one.
+    context = models.TextField(blank=True)
+    instructions = models.JSONField(default=list, blank=True)
+    hints = models.JSONField(default=list, blank=True)
 
 
 class TestCase(models.Model):

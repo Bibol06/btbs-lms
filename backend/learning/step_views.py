@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.views.decorators.http import require_POST, require_http_methods
 
-from common import api, authenticated, body, text, integer, boolean, date, ApiError
+from common import api, authenticated, body, text, raw_text, integer, boolean, date, ApiError
 from courses.models import Course, Enrollment
 from courses.access import can_manage_course, can_manage_run, resolve_run, require_run, require_learning_enrollment
 from .models import Module, Lesson, Step, StepProgress
@@ -106,6 +106,7 @@ def step_values(data, lesson, current=None):
     result = {'kind': kind, 'title': text(data, 'title', 200, True, current.title if current else ''),
               'content': text(data, 'content', 100000, default=current.content if current else ''),
               'video_url': text(data, 'video_url', 200, default=current.video_url if current else ''),
+              'transcript': raw_text(data, 'transcript', 50000).strip() if 'transcript' in data else current.transcript if current else '',
               'is_published': boolean(data, 'is_published', current.is_published if current else False),
               'required': boolean(data, 'required', current.required if current else True),
               'pass_percent': integer(data, 'pass_percent', 0, 100, current.pass_percent if current else 60)}
@@ -180,7 +181,7 @@ def step_detail(request, step_id):
     if material:
         material['url'] += f'?run_id={run.id}'
     return JsonResponse({'step': {'id': step.id, 'lesson_id': step.lesson_id, 'title': step.title, 'kind': step.kind,
-        'content': step.content, 'video_url': step.video_url, 'is_published': step.is_published, 'required': step.required,
+        'content': step.content, 'video_url': step.video_url, 'transcript': step.transcript, 'is_published': step.is_published, 'required': step.required,
         'pass_percent': step.pass_percent, 'material': material, 'material_id': step.material_id,
         'assignment_id': step.assignment_id, 'quiz_id': step.quiz_id, 'code_problem_id': step.code_problem_id,
         'completed': step_completed(step, enrollment)}})

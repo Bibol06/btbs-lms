@@ -76,6 +76,9 @@ class Step(models.Model):
     kind = models.CharField(max_length=12, choices=[('text', 'Текст'), ('video', 'Видео'), ('file', 'Файл'), ('assignment', 'Задание'), ('quiz', 'Тест'), ('code', 'Python')], default='text')
     content = models.TextField(blank=True)
     video_url = models.URLField(blank=True)
+    # Lecture transcript for video steps: blocks that start with "MM:SS Title" become
+    # clickable chapters next to the player.
+    transcript = models.TextField(blank=True)
     material = models.ForeignKey(LessonMaterial, null=True, blank=True, on_delete=models.SET_NULL, related_name='steps')
     assignment = models.ForeignKey('assessment.Assignment', null=True, blank=True, on_delete=models.RESTRICT, related_name='steps')
     quiz = models.ForeignKey('assessment.Quiz', null=True, blank=True, on_delete=models.RESTRICT, related_name='steps')
