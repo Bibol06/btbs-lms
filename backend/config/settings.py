@@ -215,6 +215,8 @@ PUBLIC_APP_URL = os.getenv('PUBLIC_APP_URL', '').rstrip('/')
 LMS_PUBLIC_URL_FILE = BASE_DIR.parent / '.local' / 'public-app-url.json'
 PASSWORD_RESET_TIMEOUT = 3600
 
+# Demo seed commands write generated demo passwords here (QA uses its own file).
+LMS_DEMO_ACCESS_FILE = Path(os.getenv('LMS_DEMO_ACCESS_FILE', str(BASE_DIR.parent / '.local' / 'demo-access.json')))
 LMS_BACKUP_DIR = Path(os.getenv('LMS_BACKUP_DIR', str(BASE_DIR.parent / '.local' / 'backups' / 'scheduled')))
 LMS_BACKUP_KEY_FILE = Path(os.getenv('LMS_BACKUP_KEY_FILE', str(BASE_DIR.parent / '.local' / 'backup-keys' / 'main.key')))
 LMS_BACKUP_KEEP = max(1, int(os.getenv('LMS_BACKUP_KEEP', '7')))

@@ -23,7 +23,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         if not settings.DEBUG:
             raise CommandError('Демо разрешено только при DEBUG=True')
-        destination = Path(settings.BASE_DIR).parent / '.local/demo-access.json'
+        destination = Path(settings.LMS_DEMO_ACCESS_FILE)
         if not destination.exists():
             call_command('seed_demo')
         metadata = json.loads(destination.read_text(encoding='utf-8'))
@@ -85,4 +85,4 @@ class Command(BaseCommand):
                 Comment.objects.create(discussion=thread, author=teacher, body=f'Обсуждение для «{run.title}». Сообщения другой группы здесь не отображаются.', is_pinned=True)
             metadata.update({'platform_ready': True, 'group_a': ra.id, 'group_b': rb.id, 'python_step': code_step.id})
         destination.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding='utf-8')
-        self.stdout.write(self.style.SUCCESS('Демо расширено. Доступы: .local/demo-access.json'))
+        self.stdout.write(self.style.SUCCESS(f'Демо расширено. Доступы: {destination}'))
