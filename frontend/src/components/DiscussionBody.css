@@ -1,6 +1,6 @@
 .discussion-text { min-width: 0; overflow-wrap: anywhere; }
 .discussion-text > p { margin: 12px 0 8px; }
-.discussion-translation-label, .discussion-original { color: #647a90; font-size: 11px; }
+.discussion-translation-label, .discussion-original { color: #647a90; font-size: var(--fs-caption); }
 .discussion-original { margin: 4px 0 12px; }
 .discussion-original summary { cursor: pointer; color: #16818e; width: fit-content; }
 .discussion-original summary:hover { text-decoration: underline; }

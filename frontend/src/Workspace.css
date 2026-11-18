@@ -17,12 +17,12 @@ h3 { font-size: 19px; }
 .topbar .header-actions button { background: transparent; padding: 7px; color: #dfe2e5; border-radius: 7px; font-size: 14px; }
 .topbar .header-actions button:hover { background: #393c3e; }
 .header-actions .account-button { display: flex; gap: 9px; align-items: center; text-align: left; }
-.account-button small { display: block; color: #aaaeb5; font-size: 11px; }
+.account-button small { display: block; color: #aaaeb5; font-size: var(--fs-caption); }
 .avatar { display: inline-grid; place-items: center; width: 35px; height: 35px; flex-shrink: 0; background: #e5eadf; color: #315b35; border-radius: 50%; font-weight: 600; }
 .notification-button { display: flex; gap: 5px; align-items: center; font-size: 22px !important; }
 .notification-button svg { width: 21px; height: 21px; }
 .sidebar { width: auto; padding: 32px 20px; background: #fff; color: #555d68; border-right: 1px solid #e8e9ec; }
-.sidebar-caption { color: #969da6; text-transform: uppercase; letter-spacing: .08em; font-size: 10px; font-weight: 700; margin: 9px 10px 12px; }
+.sidebar-caption { color: #969da6; text-transform: uppercase; letter-spacing: .08em; font-size: var(--fs-caption); font-weight: 700; margin: 9px 10px 12px; }
 .sidebar nav { margin-top: 0; gap: 5px; }
 .sidebar nav > .sidebar-caption { margin-top: 26px; }
 .sidebar nav button { color: #5b626d; border-radius: 7px; font-size: 14px; padding: 12px 10px; display: flex; gap: 10px; align-items: center; }
@@ -45,7 +45,7 @@ progress::-webkit-progress-value { background: #4aa64f; border-radius: 10px; }
 .study-card h3 { margin-top: 0; }
 .study-form input:not([type=radio]):not([type=checkbox]), .study-form textarea, .study-form select { border-color: #d3d9dc; color: #292d32; border-radius: 6px; }
 .muted { color: #808790; }
-.eyebrow { text-transform: uppercase; font-size: 10px; letter-spacing: .1em; color: #8b929b; font-weight: 700; margin: 0 0 8px; }
+.eyebrow { text-transform: uppercase; font-size: var(--fs-caption); letter-spacing: .1em; color: #8b929b; font-weight: 700; margin: 0 0 8px; }
 .empty-state { background: #fff; border-color: #d9dfdd; color: #868d94; }
 .course-tabs { gap: 25px; padding: 0; margin: 4px 0 6px; border-bottom: 1px solid #e2e6e5; flex-wrap: nowrap; overflow-x: auto; }
 .content .course-tabs button { background: transparent; color: #727983; border-radius: 0; border-bottom: 3px solid transparent; padding: 12px 0; white-space: nowrap; flex-shrink: 0; font-size: 14px; }
@@ -68,7 +68,7 @@ progress::-webkit-progress-value { background: #4aa64f; border-radius: 10px; }
 .editor-switch { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 11px 15px; background: #fff; border: 1px dashed #d6dfd4; border-radius: 8px; font-size: 13px; color: #7b837b; }
 .lesson-page .lesson-layout { grid-template-columns: 265px minmax(0, 1fr); gap: 30px; }
 .lesson-sidebar { background: #292c2e; color: #dddfe1; border-radius: 8px; padding: 20px 14px; position: sticky; top: 88px; max-height: calc(100vh - 108px); overflow: auto; }
-.lesson-sidebar > h3 { margin: 0 10px 22px; color: #aeb4b8; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.lesson-sidebar > h3 { margin: 0 10px 22px; color: #aeb4b8; font-size: var(--fs-caption); letter-spacing: .08em; text-transform: uppercase; }
 .module-outline { border-top-color: #414649; padding-top: 12px; margin-top: 16px; }
 .module-outline h4 { font-size: 14px; margin: 8px 8px 12px; font-weight: 600; }
 .module-outline > div { padding: 6px 0; gap: 1px; }
@@ -101,7 +101,7 @@ pre { background: #f4f6f5; font-size: 13px; line-height: 1.6; }
 .results-table th, .results-table td { border-color: #ecefec; padding: 18px; }
 .results-table tr:hover { background: #fafcfa; }
 .results-table td:first-child { min-width: 210px; }
-.results-table td:first-child small { display: block; font-size: 11px; margin-bottom: 12px; }
+.results-table td:first-child small { display: block; font-size: var(--fs-caption); margin-bottom: 12px; }
 .content .student-name { display: block; background: transparent; padding: 0; color: #315b35; font-size: 15px; font-weight: 600; text-align: left; }
 .content .student-name:hover { background: transparent !important; text-decoration: underline; }
 .learner-summary { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); border: 1px solid #e1e7e0; background: white; border-radius: 10px; }
@@ -112,8 +112,8 @@ pre { background: #f4f6f5; font-size: 13px; line-height: 1.6; }
 .learner-summary span { color: #8b938a; font-size: 12px; }
 .step-progress-list { margin-top: 14px; }
 .step-progress-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-top: 1px solid #edf0ec; font-size: 13px; }
-.step-progress-row > .muted { margin-left: auto; font-size: 11px; text-align: right; }
-.step-progress-row small { display: block; color: #969c95; font-size: 11px; margin-top: 4px; }
+.step-progress-row > .muted { margin-left: auto; font-size: var(--fs-caption); text-align: right; }
+.step-progress-row small { display: block; color: #969c95; font-size: var(--fs-caption); margin-top: 4px; }
 .step-status { font-size: 20px; color: #b4bcb3; }
 .step-status.done, .answer-correct { color: #328744; }
 .attempt-card { border: 1px solid #e5eae3; border-radius: 7px; padding: 14px 18px; margin: 14px 0; font-size: 13px; }
@@ -123,7 +123,7 @@ pre { background: #f4f6f5; font-size: 13px; line-height: 1.6; }
 .answer-option { display: flex; gap: 10px; align-items: center; border: 1px solid #e7eae7; border-radius: 6px; padding: 10px 12px; margin: 6px 0; background: #fafbfa; }
 .answer-option.correct { background: #f0f8ed; border-color: #bdd5b6; }
 .answer-option.chosen { border-width: 2px; border-color: #5c7856; }
-.answer-option small { margin-left: auto; color: #6c8367; font-size: 10px; }
+.answer-option small { margin-left: auto; color: #6c8367; font-size: var(--fs-caption); }
 .button-link { display: inline-flex; padding: 9px 15px; border: 1px solid #d9e3d5; border-radius: 6px; font-size: 14px; text-decoration: none; }
 .profile-cover { height: 135px; background: linear-gradient(110deg, #e0edde, #eff3ec 55%, #dbe7df); border-radius: 12px; }
 .profile-heading { display: flex; gap: 20px; align-items: center; margin-top: -40px; padding: 0 26px; }

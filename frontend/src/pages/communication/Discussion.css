@@ -7,28 +7,28 @@
 .comment-heading { display: flex; gap: 11px; align-items: center; }
 .comment-author { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .comment-author strong { font-size: 14px; }
-.comment-heading time { color: #949c95; font-size: 11px; }
+.comment-heading time { color: #949c95; font-size: var(--fs-caption); }
 .comment-avatar { width: 34px; height: 34px; font-size: 13px; background: #e9eeea; color: #637164; }
 .teacher-avatar { background: #dcefd8; color: #34783d; }
-.teacher-label, .comment-label { font-size: 10px; border-radius: 4px; padding: 2px 6px; background: #edf6e9; color: #498443; }
+.teacher-label, .comment-label { font-size: var(--fs-caption); border-radius: 4px; padding: 2px 6px; background: #edf6e9; color: #498443; }
 .comment-label { background: #f1f3f0; color: #8a9287; }
 .comment-body { margin: 15px 0 12px; font-size: 14px; }
 .comment-actions { display: flex; gap: 15px; flex-wrap: wrap; align-items: baseline; }
 .content .comment-actions > button { background: transparent; padding: 3px 0; font-size: 12px; color: #64816a; }
 .content .comment-actions > button:hover:not(:disabled) { background: transparent; color: #307e40; text-decoration: underline; }
-.comment-moderation { font-size: 11px; color: #9aa197; }
+.comment-moderation { font-size: var(--fs-caption); color: #9aa197; }
 .comment-moderation .action-row { margin-bottom: 0; }
 .thread-replies { margin: 0 22px 0 42px; border-left: 2px solid #d5e6d1; }
 .thread-replies:empty { display: none; }
 .thread-replies .thread-reply { background: #f8faf7; border-bottom: 1px solid #e6ece2; padding: 17px 20px; }
 .thread-replies .thread-reply:last-child { border-bottom: 0; border-radius: 0 0 7px 0; }
 .thread-replies .thread-reply:first-child { border-radius: 0 7px 0 0; }
-.thread-replies .comment-avatar { width: 29px; height: 29px; font-size: 11px; }
+.thread-replies .comment-avatar { width: 29px; height: 29px; font-size: var(--fs-caption); }
 .thread-replies .comment-body { font-size: 13px; }
 .content .discussion-thread .replies-toggle { margin: 0 0 12px 65px; padding: 3px 0; background: transparent; color: #73896e; font-size: 12px; }
 .content .discussion-thread .replies-toggle:hover { background: transparent; color: #34783d; }
 .thread-replies:not(:empty) { margin-bottom: 20px; }
-.reply-context { border-left: 2px solid #d4ded1; padding-left: 10px; margin: 13px 0 0; font-size: 11px; color: #929b8d; overflow-wrap: anywhere; }
+.reply-context { border-left: 2px solid #d4ded1; padding-left: 10px; margin: 13px 0 0; font-size: var(--fs-caption); color: #929b8d; overflow-wrap: anywhere; }
 .reply-context strong { color: #6b7c66; font-weight: 500; }
 .discussion-count { font-size: 12px; color: #8f988a; margin: 24px 0 12px; }
 .lesson-discussion .discussion-composer { padding: 18px; margin: 20px 0; background: #f7f9f5; border-color: #e2e9de; gap: 12px; }

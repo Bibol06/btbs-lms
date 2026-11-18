@@ -3,7 +3,7 @@
 .practice-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--canvas); }
 .practice-toolbar strong { font-size: 1rem; }
 .practice-toolbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.practice-toolbar-actions button { padding: 6px 12px; }
+.practice .practice-toolbar-actions button { padding: 6px 12px; }
 .practice-body { display: grid; grid-template-columns: minmax(260px, 38%) 1fr; height: min(78vh, 760px); min-height: 520px; }
 .practice-task-hidden .practice-body { grid-template-columns: 1fr; }
 .practice-task { overflow: auto; padding: 16px 18px; border-right: 1px solid var(--line); }
@@ -22,8 +22,8 @@
 .practice-editor-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 10px; background: var(--navy); color: #fff; }
 .practice-file { font-family: Consolas, monospace; font-size: .85rem; }
 .practice-editor-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.practice-editor-actions button { padding: 5px 12px; }
-.practice-editor-bar .secondary { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .45); }
+.practice .practice-editor-actions button { padding: 5px 12px; }
+.practice .practice-editor-bar button.secondary { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .45); }
 .practice-editor .code-editor-host, .practice-fallback { flex: 1; min-height: 0; overflow: hidden; }
 .practice-fallback { border: 0 !important; border-radius: 0 !important; width: 100%; resize: none; box-sizing: border-box; }
 .code-editor-host .cm-editor { height: 100%; font-size: 14px; }
@@ -34,8 +34,8 @@
 .practice-splitter:focus-visible { outline: 2px solid var(--teal); }
 .practice-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .practice-tabs { display: flex; gap: 2px; padding: 0 8px; background: var(--canvas); border-bottom: 1px solid var(--line); }
-.practice-tabs button { background: transparent; color: var(--muted); border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 8px 12px; }
-.practice-tabs button[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--teal); font-weight: 600; }
+.practice .practice-tabs button { min-height: 0;  background: transparent; color: var(--muted); border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 8px 12px; }
+.practice .practice-tabs button[aria-selected='true'] { color: var(--ink); border-bottom-color: var(--teal); font-weight: 600; }
 .practice-tab-body { flex: 1; min-height: 0; overflow: auto; padding: 10px 14px; }
 .practice-output pre { background: #0f1f33; color: #e6edf5; padding: 10px 12px; border-radius: 8px; white-space: pre-wrap; margin: 6px 0; }
 .practice-output pre.error { background: #fff1f0; color: #a8071a; }
@@ -60,9 +60,9 @@ body.practice-open { overflow: hidden; }
 .practice-player .practice-body { height: auto; flex: 1; min-height: 0; }
 /* Dark theme (default), DataCamp-style: navy editor, dark bottom panel; the task stays light. */
 .practice-editor-bar { gap: 10px; }
-.practice-theme-toggle { margin-right: auto; background: transparent; color: #c6d2df; border: 0; padding: 4px 8px; font-size: .82rem; font-weight: 500; }
-.practice-theme-toggle:hover { color: #fff; background: rgba(255, 255, 255, .08); }
-.practice-light .practice-theme-toggle { color: #dbe6f0; }
+.practice .practice-editor-bar .practice-theme-toggle { min-height: 0;  margin-right: auto; background: transparent; color: #c6d2df; border: 0; padding: 4px 8px; font-size: .82rem; font-weight: 500; }
+.practice .practice-editor-bar .practice-theme-toggle:hover:not(:disabled) { color: #fff; background: rgba(255, 255, 255, .08); }
+.practice.practice-light .practice-editor-bar .practice-theme-toggle { color: #dbe6f0; }
 .practice-dark .practice-work { background: #05192d; }
 .practice-dark .practice-editor-bar { background: #0b2a47; border-bottom: 1px solid #1d3b5c; }
 .practice-dark .code-editor-host .cm-editor.cm-focused { outline-color: #03ef62; }
@@ -84,5 +84,7 @@ body.practice-open { overflow: hidden; }
 .practice-dark .practice-input textarea { background: #0b2a47; color: #e6edf5; border-color: #1d3b5c; }
 .practice-dark .practice-slides select { background: #0b2a47; color: #e6edf5; border-color: #1d3b5c; }
 .practice-dark .practice-slides iframe { border-color: #1d3b5c; background: #fff; }
-.practice-editor-bar .danger { background: transparent; color: #ffb4b4; border: 1px solid rgba(255, 150, 160, .5); }
+.practice .practice-editor-bar button.danger { background: transparent; color: #ffb4b4; border: 1px solid rgba(255, 150, 160, .5); }
 .practice-editor-bar .confirm-action { display: inline-flex; align-items: center; gap: 6px; color: #e6edf5; font-size: .85rem; }
+.practice .practice-editor-bar button.secondary:hover:not(:disabled) { background: rgba(255, 255, 255, .08); color: #fff; border-color: rgba(255, 255, 255, .6); }
+.practice .practice-editor-bar button.danger:hover:not(:disabled) { background: rgba(255, 120, 130, .12); }

@@ -1,0 +1,78 @@
+/* BTBS design tokens (see frontend/DESIGN_SPEC.md). Use these instead of raw values. */
+:root {
+  /* Color roles */
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface-subtle: #f0f3f7;
+  --surface-brand: #e8f6f6;
+  --border: #e3e9ef;
+  --border-strong: #c9d3de;
+  --border-hover: #a9b6c5;
+  --text: #182b43;
+  --text-muted: #5b6b80;
+  --text-subtle: #7b8a9c;
+  --heading: #102542;
+  --primary: #087f88;
+  --primary-hover: #066a72;
+  --primary-ink: #066a72;
+  --navy: #102542;
+  --navy-hover: #1c3b5f;
+  --on-navy-muted: #9fb0c3;
+  --accent: #38c3c9;
+  --success: #067647;
+  --success-bg: #ecfdf3;
+  --warning: #b54708;
+  --warning-bg: #fffaeb;
+  --danger: #b42318;
+  --danger-bg: #fef3f2;
+  --danger-border: #f4c7c2;
+  --focus: #087f88;
+  --focus-ring: 0 0 0 3px rgba(8, 127, 136, .35);
+
+  /* Type */
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, "Inter", "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", Menlo, monospace;
+  --fs-display: 36px; --lh-display: 44px;
+  --fs-h1: 28px; --lh-h1: 36px;
+  --fs-h2: 20px; --lh-h2: 28px;
+  --fs-h3: 16px; --lh-h3: 24px;
+  --fs-body-lg: 16px; --lh-body-lg: 26px;
+  --fs-body: 14px; --lh-body: 22px;
+  --fs-small: 13px; --lh-small: 20px;
+  --fs-caption: 12px; --lh-caption: 16px;
+
+  /* Spacing (4px grid) */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px;
+  --sp-8: 32px; --sp-10: 40px; --sp-12: 48px; --sp-16: 64px;
+
+  /* Shape */
+  --r-ctl: 6px;
+  --r-card: 12px;
+  --r-sheet: 16px;
+  --r-pill: 999px;
+  --sh-sm: 0 1px 2px rgba(16, 37, 66, .06);
+  --sh-md: 0 4px 12px rgba(16, 37, 66, .08), 0 1px 3px rgba(16, 37, 66, .06);
+  --sh-lg: 0 16px 40px rgba(16, 37, 66, .16);
+
+  /* Controls */
+  --ctl-sm: 28px;
+  --ctl-md: 36px;
+  --ctl-lg: 44px;
+
+  /* Motion */
+  --ease: cubic-bezier(.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(.3, 0, .8, .15);
+  --dur-fast: 100ms;
+  --dur-menu: 150ms;
+  --dur-modal: 250ms;
+
+  /* Legacy names used across older CSS; they now point at the tokens above. */
+  --teal: var(--primary);
+  --cyan: var(--accent);
+  --teal-soft: var(--surface-brand);
+  --ink: var(--text);
+  --muted: var(--text-muted);
+  --line: var(--border);
+  --canvas: var(--bg);
+  --radius: var(--r-card);
+}

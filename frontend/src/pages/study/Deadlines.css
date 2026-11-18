@@ -1,11 +1,11 @@
 .deadline-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 18px; padding: 18px 20px; margin: 16px 0; background: #f5f8f2; border: 1px solid #e3eadc; border-radius: 8px; }
 .deadline-summary > div { display: grid; gap: 6px; align-content: start; }
-.deadline-summary small { color: #8a9781; font-size: 11px; }
+.deadline-summary small { color: #8a9781; font-size: var(--fs-caption); }
 .deadline-summary strong { font-size: 14px; font-weight: 600; color: #526b45; }
 .deadline-note { padding: 12px 16px; background: #eff6ec; border-left: 3px solid #a7c69a; color: #607952; border-radius: 5px; font-size: 13px; }
 .deadline-note.warning { background: #fff7e8; color: #947033; border-left-color: #dfc283; }
 .deadline-note.done { background: #f0f7ed; color: #4e8547; }
-.deadline-pill { display: inline-flex; align-items: center; font-size: 11px; line-height: 1.6; padding: 4px 9px; border-radius: 6px; color: #668259; background: #edf5e8; }
+.deadline-pill { display: inline-flex; align-items: center; font-size: var(--fs-caption); line-height: 1.6; padding: 4px 9px; border-radius: 6px; color: #668259; background: #edf5e8; }
 .deadline-pill.warning { color: #9a722d; background: #fff5df; }
 .deadline-pill.danger { color: #b8594b; background: #fff0ed; }
 .queue-filters { display: flex; flex-wrap: wrap; gap: 8px; }

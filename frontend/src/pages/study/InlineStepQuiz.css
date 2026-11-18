@@ -1,11 +1,11 @@
 .inline-step-quiz { border: 1px solid #dce7ef; border-radius: 16px; padding: 26px; background: #fff; color: #142c47; }
 .inline-quiz-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 19px; border-bottom: 1px solid #edf1f5; margin-bottom: 22px; }
 .inline-quiz-heading h3 { margin: 6px 0 0; font-size: 20px; }
-.inline-quiz-eyebrow { color: #058590; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.inline-quiz-eyebrow { color: #058590; font-size: var(--fs-caption); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .inline-quiz-count { color: #74879a; font-size: 12px; white-space: nowrap; padding-top: 5px; }
 .inline-quiz-ready > p:first-child { margin-top: 0; }
 .inline-quiz-rules { display: flex; flex-wrap: wrap; gap: 8px 20px; color: #667d91; font-size: 12px; margin: 18px 0; }
-.inline-quiz-timer-note { display: block; color: #768b9d; font-size: 11px; max-width: 650px; margin: 14px 0 0; }
+.inline-quiz-timer-note { display: block; color: #768b9d; font-size: var(--fs-caption); max-width: 650px; margin: 14px 0 0; }
 .inline-quiz-notice { border-left: 3px solid #dfb969; padding: 10px 13px; background: #fff9ed; color: #796332; font-size: 13px; }
 .inline-quiz-result, .inline-quiz-best { background: #eaf7f4; color: #176957; border-radius: 9px; padding: 13px 16px; }
 .inline-quiz-history { margin-top: 20px; padding-top: 16px; border-top: 1px solid #edf1f5; color: #64798d; font-size: 12px; }
@@ -19,7 +19,7 @@
 .content .inline-question-navigation button { min-width: 34px; padding: 7px 10px; flex: 0 0 auto; font-size: 12px; }
 .content .inline-question-navigation button.current { background: #078590; color: #fff; border-color: #078590; }
 .inline-question-pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
-.inline-question-pager span { color: #71859a; font-size: 11px; }
+.inline-question-pager span { color: #71859a; font-size: var(--fs-caption); }
 .content .inline-question-pager button { font-size: 12px; padding: 8px 11px; }
 .inline-step-quiz .quiz-player fieldset, .inline-quiz-preview-question { border: 1px solid #e1e9ee; border-radius: 12px; padding: 18px; margin: 18px 0; min-width: 0; }
 .inline-step-quiz .quiz-player legend, .inline-quiz-preview-question legend { font-size: 15px; font-weight: 600; padding: 0 7px; max-width: 100%; overflow-wrap: anywhere; }
