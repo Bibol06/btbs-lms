@@ -411,3 +411,5 @@ pre { background: var(--surface-subtle); color: var(--text); line-height: 1.6; b
 /* Tab rows scroll sideways on narrow screens instead of truncating tab labels. */
 .course-tabs, .analytics-tabs, .practice-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
 .content :is(.course-tabs, .analytics-tabs) button { flex-shrink: 0; max-width: none; overflow: visible; text-overflow: clip; }
+/* Form buttons keep their natural width instead of stretching across the form grid (QA-016). */
+.study-form > button, .study-form > .action-row > button { justify-self: start; align-self: flex-start; width: auto; }

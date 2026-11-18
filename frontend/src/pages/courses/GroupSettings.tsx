@@ -6,7 +6,6 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { apiRequest } from '../../api'
 import { errorMessage, inputDate, isoDate } from '../study/types'
 import ConfirmAction from '../study/ConfirmAction'
-import LearningPlan from './LearningPlan'
 
 export type Run = { id: number; title: string; kind: string; starts_at: string | null; ends_at: string | null; is_open: boolean; can_manage: boolean; join_code: string; enrollment_id: number | null; enrollment_status: string | null; teachers: { id: number; username: string; display_name: string; role_label: string }[] }
 
@@ -59,7 +58,8 @@ export default function GroupSettings({ courseId, run, canEdit, refresh }: { cou
   }
   return <section className="study-section"><h2>{tr("Управление группами")}</h2>
     {error && <p role="alert" className="error">{tr(error)}</p>}{message && <p role="status" className="success">{tr(message)}</p>}
-    <LearningPlan key={`plan-${run.id}-${run.starts_at || ''}`} courseId={courseId} runId={run.id} canEditQuiz={canEdit} onSaved={refresh} />
+    {/* The plan has its own tab; repeating its editor here made this page twice as long (QA-016). */}
+    <p className="muted"><a href={`#course=${courseId}&run=${run.id}&tab=plan`}>{tr("Сроки модулей и контрольные тесты группы — во вкладке «Учебный план» →")}</a></p>
     <form className="study-form" key={`run-${run.id}-${run.starts_at || ''}`} onSubmit={e => perform(e, 'edit')}><h3>{tr("Текущий запуск: ")}{ct(run, "title")}</h3>
       <label>{tr("Название запуска")}<input name="title" defaultValue={run.title} maxLength={200} required /></label>
       <div className="form-grid"><label>{tr("Начало обучения")}<input type="datetime-local" name="starts_at" defaultValue={inputDate(run.starts_at)} /></label><label>{tr("Окончание обучения")}<input type="datetime-local" name="ends_at" defaultValue={inputDate(run.ends_at)} /></label></div>
@@ -68,11 +68,11 @@ export default function GroupSettings({ courseId, run, canEdit, refresh }: { cou
     </form>
     <div className="study-card"><h3>{tr("Преподаватели группы")}</h3>{run.teachers.map(teacher => <p key={teacher.id}><a href={`#profile=${teacher.id}`}>{teacher.display_name}</a><RoleBadge label={tr(teacher.role_label)} /></p>)}{!run.teachers.length && <p className="muted">{tr("Группу ведёт основная команда курса.")}</p>}</div>
     <div className="study-card"><h3>{tr("Студенты этого запуска")}</h3>{students.map(s => <div className="action-row" key={s.id}><span>{s.student}<RoleBadge label={tr(s.role_label)} /> · {s.status === 'completed' ? tr("Завершено") : s.status === 'archived' ? tr("В архиве") : s.status === 'removed' ? tr("Доступ отозван") : tr("Учится")}</span>{s.status === 'removed' ? <button className="secondary" onClick={() => setStudentStatus(s.id, 'active')}>{tr("Восстановить доступ")}</button> : <ConfirmAction label={tr("Отозвать доступ")} question={tr("Закрыть студенту доступ к этому запуску? Его результаты сохранятся.")} onConfirm={() => setStudentStatus(s.id, 'removed')} />}</div>)}{!students.length && <p>{tr("Студентов пока нет.")}</p>}
-      <form className="study-form compact" onSubmit={e => perform(e, 'invite')}><label>{tr("Логин студента")}<input name="username" required maxLength={150} /></label><button>{tr("Добавить студента в запуск")}</button></form>
+      <form className="study-form compact" onSubmit={e => perform(e, 'invite')}><label>{tr("Логин студента")}<input name="username" required maxLength={150} /></label><button className="secondary">{tr("Добавить студента в запуск")}</button></form>
     </div>
     {canEdit && <>
-      <form className="study-form" onSubmit={e => perform(e, 'create')}><h3>{tr("Новая учебная группа")}</h3><label>{tr("Название группы")}<input name="title" required maxLength={200} /></label><div className="form-grid"><label>{tr("Начало")}<input type="datetime-local" name="starts_at" /></label><label>{tr("Окончание")}<input type="datetime-local" name="ends_at" /></label></div><button>{tr("Создать группу")}</button></form>
-      <form className="study-form" onSubmit={e => perform(e, 'teacher')}><h3>{tr("Назначить преподавателя")}</h3><label>{tr("Логин преподавателя")}<input name="username" required maxLength={150} /></label><label>{tr("Полномочия")}<select name="scope"><option value="run">{tr("Проверка и ведение только текущей группы")}</option><option value="course">{tr("Редактирование содержания всего курса")}</option></select></label><button>{tr("Назначить")}</button></form>
+      <form className="study-form" onSubmit={e => perform(e, 'create')}><h3>{tr("Новая учебная группа")}</h3><label>{tr("Название группы")}<input name="title" required maxLength={200} /></label><div className="form-grid"><label>{tr("Начало")}<input type="datetime-local" name="starts_at" /></label><label>{tr("Окончание")}<input type="datetime-local" name="ends_at" /></label></div><button className="secondary">{tr("Создать группу")}</button></form>
+      <form className="study-form" onSubmit={e => perform(e, 'teacher')}><h3>{tr("Назначить преподавателя")}</h3><label>{tr("Логин преподавателя")}<input name="username" required maxLength={150} /></label><label>{tr("Полномочия")}<select name="scope"><option value="run">{tr("Проверка и ведение только текущей группы")}</option><option value="course">{tr("Редактирование содержания всего курса")}</option></select></label><button className="secondary">{tr("Назначить")}</button></form>
       <details className="study-card"><summary>{tr("История изменений курса")}</summary>{audit.map((a, i) => <p key={i}>{a.actor}<RoleBadge label={tr(a.actor_role_label)} /> · {auditCaption(a.action)} · {new Date(a.created_at).toLocaleString(getLocale())}</p>)}</details>
     </>}
   </section>
