@@ -9,7 +9,6 @@ import AdminControl from './pages/management/AdminControl'
 import StudentsPage from './pages/management/StudentsPage'
 import ReviewQueue from './pages/study/ReviewQueue'
 import './pages/management/Management.css'
-import RoleBadge from './components/RoleBadge'
 import NavIcon from './components/NavIcon'
 import WorkspaceSearch from './components/WorkspaceSearch'
 import LanguageSwitcher from './components/LanguageSwitcher'
@@ -32,6 +31,8 @@ import './App.css'
 import './Workspace.css'
 import './Brand.css'
 import './pages/workspace/WorkspaceHub.css'
+import './styles/shell.css'
+import AccountMenu from './components/AccountMenu'
 
 const roles = localizedLabels({
   student: 'Студент',
@@ -210,12 +211,12 @@ function App() {
         <a className="brand notranslate" translate="no" lang="en" href={`#page=${user ? homeFor(user) : 'catalog'}`} aria-label="BTBS"><img src="/brand/btbs-color.png" alt="" width="43" height="51" /><span className="brand-wordmark"><strong>BTBS</strong></span></a>
         <div className="workspace-context"><span>{user ? workspaceTitle(user) : tr("Онлайн-обучение")}</span>{inCourse || activePage === 'preview' ? <a href={`#page=${homeFor(user)}`}>{tr("← Вернуться в кабинет")}</a> : <strong>{ct(items.find(i => i.id === activeNav), "label") || (activePage === 'profile' ? tr("Мой профиль") : activePage === 'notifications' ? tr("Уведомления") : tr("Рабочее пространство"))}</strong>}</div>
         {user && user.admin_scope !== 'system' && <WorkspaceSearch />}
-        <div className="header-actions"><LanguageSwitcher />{user ? <>
-          <button className="notification-button" aria-label={tr("Уведомления")} onClick={() => navigatePage('notifications')}><NavIcon name="notifications" /><NotificationCount /></button>
-          <button className="account-button" onClick={() => navigatePage('profile')}><span className="avatar">{(user.display_name || user.username)[0]?.toUpperCase()}</span><span>{user.display_name || user.username}<small><RoleBadge label={user.role_label || roles[user.role]} /></small></span></button>
-          <button className="logout-button" onClick={handleLogout}>{tr("Выйти")}</button>
+        <div className="header-actions">{user ? <>
+          <button className="notification-button" aria-label={tr("Уведомления")} aria-current={activePage === 'notifications' ? 'page' : undefined} onClick={() => navigatePage('notifications')}><NavIcon name="notifications" /><NotificationCount /></button>
+          <AccountMenu name={user.display_name || user.username} roleLabel={user.role_label ? tr(user.role_label) : roles[user.role]} onProfile={() => navigatePage('profile')} onLogout={handleLogout} />
         </> : <>
-          <button onClick={() => { setPendingCourseId(null); setAuthMode('login'); setShowLogin(true); setError('') }}>{tr("Войти")}</button>
+          <LanguageSwitcher />
+          <button className="login-button" onClick={() => { setPendingCourseId(null); setAuthMode('login'); setShowLogin(true); setError('') }}>{tr("Войти")}</button>
           <button className="register-button" onClick={() => { setPendingCourseId(null); setAuthMode('register'); setShowLogin(true); setError('') }}>{tr("Регистрация")}</button>
         </>}</div>
       </header>
@@ -223,8 +224,6 @@ function App() {
         <div className="sidebar-caption">{user ? workspaceTitle(user) : tr("Образовательная платформа")}</div>
         <nav aria-label={user ? workspaceTitle(user) : tr("Навигация")}>
           {items.map(item => <button key={item.id} className={activeNav === item.id ? 'active' : ''} aria-current={activeNav === item.id ? 'page' : undefined} onClick={() => navigatePage(item.id)}><NavIcon name={item.id} />{ct(item, "label")}</button>)}
-          {user && <><div className="sidebar-caption">{tr("Личное")}</div><button className={activePage === 'notifications' ? 'active' : ''} aria-current={activePage === 'notifications' ? 'page' : undefined} onClick={() => navigatePage('notifications')}><NavIcon name="notifications" />{tr("Уведомления")}</button><button className={activePage === 'profile' ? 'active' : ''} aria-current={activePage === 'profile' ? 'page' : undefined} onClick={() => navigatePage('profile')}><NavIcon name="profile" />{tr("Мой профиль")}</button></>}
-          {user && <button className="sidebar-logout" onClick={handleLogout}>{tr("Выйти")}</button>}
         </nav>
         
       </aside>

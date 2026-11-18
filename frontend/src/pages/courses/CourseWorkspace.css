@@ -1,14 +1,14 @@
 .course-workspace { display: grid; grid-template-columns: 270px minmax(0,1fr); gap: 28px; align-items: start; }
-.course-rail { position: sticky; top: 96px; max-height: calc(100dvh - 116px); overflow: auto; scrollbar-width: thin; background: #fff; border: 1px solid #e2eaf1; border-radius: 14px; padding: 16px; }
-.course-rail-caption { margin: 3px 10px 12px; color: #8291a2; font-size: var(--fs-caption); text-transform: uppercase; font-weight: 700; letter-spacing: .09em; }
+.course-rail { position: sticky; top: 72px; max-height: calc(100dvh - 88px); overflow: auto; scrollbar-width: thin; background: #fff; border: 1px solid #e2eaf1; border-radius: 14px; padding: 16px; }
+.course-rail-caption { margin: var(--sp-1) var(--sp-3) var(--sp-2); color: var(--text-muted); font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 500; text-transform: none; letter-spacing: 0; }
 .course-rail-toggle { display: none; }
-.course-navigation { display: grid; gap: 5px; }
-.content .course-navigation button { width: 100%; text-align: left; background: transparent; border: 0; color: #62758a; padding: 11px 12px; border-radius: 7px; font-size: 12px; font-weight: 500; }
-.content .course-navigation button:hover { background: #f2f7fa; color: #102542; }
-.content .course-navigation button[aria-current="page"] { background: #e8f6f7; color: #087c87; box-shadow: inset 3px 0 #22bac5; font-weight: 650; }
-.course-section-menu { margin: 3px 0; border: 0; padding: 0; font-size: 12px; }
-.course-section-menu > summary { padding: 11px 12px; color: #617489; cursor: pointer; }
-.course-section-menu[open] { background: #f8fafc; border-radius: 9px; }
+.course-navigation { display: grid; gap: 2px; }
+.content .course-navigation button { display: flex; justify-content: flex-start; width: 100%; min-height: 36px; text-align: left; white-space: normal; background: transparent; border: 0; color: var(--text-muted); padding: 0 var(--sp-3); border-radius: var(--r-ctl); font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 500; box-shadow: none; }
+.content .course-navigation button:hover:not(:disabled) { background: var(--surface-subtle); color: var(--text); }
+.content .course-navigation button[aria-current="page"], .content .course-navigation button[aria-current="page"]:hover:not(:disabled) { background: var(--surface-brand); color: var(--primary-ink); box-shadow: none; font-weight: 500; }
+.course-section-menu { margin: var(--sp-1) 0; border: 0; padding: 0; font-size: var(--fs-body); }
+.course-section-menu > summary { min-height: 36px; display: flex; align-items: center; padding: 0 var(--sp-3); color: var(--text-muted); font-weight: 500; cursor: pointer; border-radius: var(--r-ctl); }
+.course-section-menu[open] { background: transparent; }
 .course-outline-host:empty { display: none; }
 .course-outline-host { margin-top: 16px; border-top: 1px solid #e5edf3; padding-top: 15px; }
 .course-rail .lesson-sidebar { position: static; background: transparent; color: #526b80; max-height: none; border: 0; padding: 0; border-radius: 0; }
@@ -78,3 +78,5 @@
 @media(min-width:1000px) { .course-mode .content { padding: 24px 30px 50px; } .course-heading { margin-bottom: 4px; } .course-heading h1 { font-size: 27px; } .course-author-tools { margin-top: -6px; margin-bottom: 6px; } }
 @media(max-width:1000px) { .course-workspace { grid-template-columns: 235px minmax(0,1fr); gap: 18px; } .course-rail { padding: 12px; } .course-main .lesson-content { padding: 22px; } }
 @media(max-width:760px) { .course-workspace { grid-template-columns: minmax(0,1fr); } .course-rail { position: static; max-height: none; padding: 10px 12px; } .content .course-rail-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 9px 5px; border: 0; background: transparent; font-size: 12px; } .course-rail:not(.is-open) .course-rail-body { display: none; } .course-rail-body { padding-top: 14px; } .course-outline-host .lesson-sidebar { max-height: 290px; overflow: auto; } .course-readiness-banner, .readiness-issue { flex-direction: column; align-items: flex-start; } .course-readiness-metrics { gap: 7px; } .course-readiness-metrics > div { padding: 13px; } .course-overview,.course-readiness-panel,.course-locked-state { padding: 20px; } }
+
+.course-section-menu > summary:hover { background: var(--surface-subtle); color: var(--text); }

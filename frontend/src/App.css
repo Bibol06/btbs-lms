@@ -47,7 +47,8 @@
   min-width: 0;
 }
 
-header {
+/* Only the site header; the lesson player and dialogs have their own headers. */
+.layout > header {
   display: flex;
   justify-content: space-between;
   align-items: center;

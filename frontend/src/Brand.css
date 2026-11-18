@@ -71,7 +71,7 @@ code, kbd, pre, samp { font-family: var(--font-mono); }
 .app-loading { min-height: 100dvh; display: grid; place-content: center; justify-items: center; gap: 18px; color: var(--muted); font-size: 14px; }
 
 /* Forms, surfaces and actions */
-.content button, .login-card button, .lesson-player button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: var(--ctl-md); padding: 0 var(--sp-4); border: 1px solid transparent; border-radius: var(--r-ctl); background: var(--primary); color: #fff; font-size: var(--fs-body); line-height: 20px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
+.content button, .login-card button, .lesson-player button { min-height: var(--ctl-md); padding: 0 var(--sp-4); border: 1px solid transparent; border-radius: var(--r-ctl); background: var(--primary); color: #fff; font-size: var(--fs-body); line-height: 20px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease); }
 .content button:hover:not(:disabled), .login-card button:hover:not(:disabled), .lesson-player button:hover:not(:disabled) { background: var(--primary-hover); }
 .content button.secondary, .lesson-player button.secondary { background: var(--surface); color: var(--text); border-color: var(--border-strong); }
 .content button.secondary:hover:not(:disabled), .lesson-player button.secondary:hover:not(:disabled) { background: var(--surface-subtle); border-color: var(--border-hover); color: var(--text); }

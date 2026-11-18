@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -100,7 +101,9 @@ DATABASES = {
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST", "localhost"),
         "PORT": os.getenv("DB_PORT", "5432"),
-        "CONN_MAX_AGE": max(0, min(300, int(os.getenv('DB_CONN_MAX_AGE', '60')))),
+        # runserver handles each request in a new thread, so persistent connections are
+        # never reused and leak until PostgreSQL runs out of slots ("too many clients").
+        "CONN_MAX_AGE": 0 if sys.argv[1:2] == ['runserver'] else max(0, min(300, int(os.getenv('DB_CONN_MAX_AGE', '60')))),
         "CONN_HEALTH_CHECKS": True,
     }
 }
