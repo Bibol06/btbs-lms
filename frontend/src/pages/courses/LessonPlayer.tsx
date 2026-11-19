@@ -117,7 +117,7 @@ export default function LessonPlayer({ courseTitle, runId, courseId, modules, st
     <header className="player-topbar">
       <div className="player-crumbs">
         <button type="button" className="player-icon-button" aria-label={tr("Выйти из урока")} title={tr("Выйти из урока")} onClick={onExit}>✕</button>
-        <span className="player-course">{courseTitle}</span>{lesson && <><span aria-hidden="true">/</span><strong>{ct(lesson, 'title')}</strong></>}
+        <span className="player-course" title={courseTitle}>{courseTitle}</span>{lesson && <><span aria-hidden="true">/</span><strong title={ct(lesson, 'title')}>{ct(lesson, 'title')}</strong></>}
       </div>
       <nav className="player-nav" aria-label={tr("Навигация по шагам")}>
         <button type="button" aria-label={tr("Предыдущий шаг")} disabled={!previous || previous.locked} onClick={() => previous && onSelect(previous.id)}>←</button>

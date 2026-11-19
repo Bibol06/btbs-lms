@@ -134,7 +134,17 @@ def preview(request, course_id):
         if not isinstance(ids, list) or len(ids) > 2000 or any(type(i) is not int for i in ids):
             raise ApiError('Неверные пробные отметки')
         completed = set(ids)
+    # Ordinal numbers for the outline ("Модуль N · Урок M · Шаг K"): titles may be digits or
+    # repeat, so labels built from names were ambiguous (QA-014).
+    module_numbers, lesson_numbers, lessons_in_module, steps_in_lesson = {}, {}, {}, {}
     for s in steps.order_by('lesson__module__position', 'lesson__position', 'position'):
+        module_key = s.lesson.module_id or 0
+        module_number = module_numbers.setdefault(module_key, len(module_numbers) + 1)
+        if s.lesson_id not in lesson_numbers:
+            lessons_in_module[module_key] = lessons_in_module.get(module_key, 0) + 1
+            lesson_numbers[s.lesson_id] = lessons_in_module[module_key]
+        lesson_number = lesson_numbers[s.lesson_id]
+        steps_in_lesson[s.lesson_id] = steps_in_lesson.get(s.lesson_id, 0) + 1
         if s.assignment_id and not s.assignment.is_published or s.quiz_id and not s.quiz.is_published:
             continue
         module = s.lesson.module
@@ -149,6 +159,7 @@ def preview(request, course_id):
             if not module.prerequisite.is_published or not required.issubset(completed):
                 reason = 'Сначала завершите предыдущий модуль в предпросмотре'
         row = {'id': s.id, 'title': s.title, 'kind': s.kind, 'module': module.title if module else 'Программа курса', 'lesson': s.lesson.title,
+            'module_number': module_number, 'lesson_number': lesson_number, 'step_number': steps_in_lesson[s.lesson_id],
             'reason': reason, 'action_reason': '', 'required': s.required, 'content': s.content, 'video_url': s.video_url, 'pass_percent': s.pass_percent}
         if s.material:
             from learning.views import serialize_material

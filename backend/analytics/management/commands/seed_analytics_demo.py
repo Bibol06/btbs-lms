@@ -16,11 +16,11 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         if not settings.DEBUG:
             raise CommandError('Local demonstration only')
-        destination = Path(settings.BASE_DIR).parent/'.local/analytics-demo.json'
+        destination = Path(settings.LMS_DEMO_ACCESS_FILE).parent/'analytics-demo.json'
         if destination.exists():
             self.stdout.write('Analytics demo already exists')
             return
-        access = json.loads((destination.parent/'demo-access.json').read_text(encoding='utf-8-sig'))
+        access = json.loads(Path(settings.LMS_DEMO_ACCESS_FILE).read_text(encoding='utf-8-sig'))
         User = get_user_model()
         teacher = User.objects.get(username=access['accounts']['teacher']['username'])
         student = User.objects.get(username=access['accounts']['student']['username'])

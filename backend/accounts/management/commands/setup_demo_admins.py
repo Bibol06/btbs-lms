@@ -17,7 +17,7 @@ class Command(BaseCommand):
     help = 'Create scoped demo administrators; credentials stay in the local ignored access file.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--access-file', type=Path, default=settings.BASE_DIR.parent / '.local' / 'demo-access.json')
+        parser.add_argument('--access-file', type=Path, default=settings.LMS_DEMO_ACCESS_FILE)
 
     def handle(self, *args, **options):
         if not settings.DEBUG:

@@ -60,7 +60,7 @@
 .admin-responsibility-grid h4 { margin: 0 0 16px; font-size: 17px; }
 .admin-responsibility-grid small { display: block; margin-top: 5px; color: var(--muted, #64748b); }
 .admin-responsibility-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-.admin-responsibility-tags span { background: #eaf5f6; color: #087e8b; border-radius: 6px; padding: 5px 9px; font-size: 12px; }
+.admin-responsibility-tags span { background: var(--surface-brand); color: var(--primary-ink); border-radius: 6px; padding: 5px 9px; font-size: 12px; }
 .admin-responsibilities summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 800px) { .admin-responsibility-grid { grid-template-columns: 1fr; } }
 

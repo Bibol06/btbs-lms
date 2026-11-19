@@ -32,7 +32,8 @@ export type StudyData = {
   progress: { completed: number; total: number; percent: number }
 }
 export function formatDate(value: string | null) {
-  return value ? new Date(value).toLocaleString(getLocale()) : tr("Без ограничения")
+  // Minutes are enough for deadlines and activity; seconds were noise (QA-026).
+  return value ? new Date(value).toLocaleString(getLocale(), { dateStyle: 'medium', timeStyle: 'short' }) : tr("Без ограничения")
 }
 export function inputDate(value: string | null | undefined) {
   if (!value) return ''

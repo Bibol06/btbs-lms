@@ -22,9 +22,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if not settings.DEBUG:
             raise CommandError('Демо-данные разрешены только при DEBUG=True')
-        destination = Path(settings.BASE_DIR).parent / '.local/demo-access.json'
+        destination = Path(settings.LMS_DEMO_ACCESS_FILE)
         if destination.exists():
-            self.stdout.write('Демо уже создано. Доступы: .local/demo-access.json')
+            self.stdout.write(f'Демо уже создано. Доступы: {destination}')
             return
         User = get_user_model()
         users, credentials = {}, {}
@@ -62,4 +62,4 @@ class Command(BaseCommand):
             Question.objects.create(quiz=quiz, body='Сколько будет 3 × 2?', options=['5', '8', '6', '9'], correct_index=2, position=2)
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(json.dumps({'course_id': course.id, 'accounts': credentials}, ensure_ascii=False, indent=2), encoding='utf-8')
-        self.stdout.write(self.style.SUCCESS('Демо создано. Доступы сохранены в .local/demo-access.json'))
+        self.stdout.write(self.style.SUCCESS(f'Демо создано. Доступы сохранены в {destination}'))

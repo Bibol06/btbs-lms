@@ -1,3 +1,4 @@
+import { readableTitle } from '../../titleQuality'
 import { ct } from '../../i18n/content'
 import { readApiJson } from '../../i18n/contentStore'
 import { t as tr } from '../../i18n/language'
@@ -174,7 +175,10 @@ function TeacherMediaUploader({ courseId, onUploaded }: Props) {
                 type="file"
                 accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.webm,.jpg,.jpeg,.png"
                 onChange={e => {
-                  setFile(e.target.files?.[0] ?? null)
+                  const chosen = e.target.files?.[0] ?? null
+                  setFile(chosen)
+                  // Suggest a readable, editable title instead of the raw file name (QA-041).
+                  if (chosen && !title.trim()) setTitle(readableTitle(chosen.name))
                   setUploaded(null)
                 }}
               />

@@ -70,7 +70,7 @@ export default function VideoLecture({ url, transcript, title, panelOpen }: { ur
       })}</ol>
     </aside>}
     <div className="video-stage">
-      {id ? <iframe ref={frame} title={title} src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?enablejsapi=1&rel=0&modestbranding=1&origin=${encodeURIComponent(location.origin)}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
+      {id ? <iframe ref={frame} title={title} src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?enablejsapi=1&rel=0&modestbranding=1&origin=${encodeURIComponent(location.origin)}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerPolicy="strict-origin-when-cross-origin" />
         : direct ? <video ref={video} src={url} controls preload="metadata" onTimeUpdate={e => setTime(e.currentTarget.currentTime)} />
         : <div className="video-external"><p>{tr("Это видео открывается на сайте источника.")}</p><a className="button-link" href={url} target="_blank" rel="noreferrer">{tr("Смотреть видео →")}</a></div>}
     </div>
