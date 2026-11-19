@@ -185,7 +185,7 @@ progress::-moz-progress-bar { background: var(--primary); border-radius: var(--r
 .editor-switch { border-color: #b9cdd9; color: var(--muted); font-size: 12px; }
 .lesson-page .lesson-layout { grid-template-columns: 264px minmax(0,1fr); gap: 28px; }
 .lesson-sidebar { top: 100px; max-height: calc(100dvh - 122px); padding: 24px 15px; background: var(--navy); border-radius: 12px; color: #d8e3ed; scrollbar-width: thin; }
-.lesson-sidebar > h3 { color: #a7bcd0; font-size: var(--fs-caption); margin-bottom: 24px; }
+.lesson-sidebar > h3 { color: var(--on-navy-muted); font-size: var(--fs-caption); margin-bottom: 24px; }
 .module-outline { border-top-color: #ffffff20; }
 .module-outline h4 { color: #e8f0f7; font-size: 13px; }
 .module-outline > div > strong { color: #a6bcd0; font-size: var(--fs-caption); }
@@ -237,7 +237,7 @@ pre { background: var(--surface-subtle); color: var(--text); line-height: 1.6; b
 .deadline-summary { background: #f2f7f9; border-color: #dfebf0; border-radius: 10px; }
 .deadline-summary small, .review-work-dates, .queue-mine { color: var(--muted); }
 .deadline-summary strong, .review-work-dates strong { color: #4c687c; }
-.deadline-pill { color: #1d7982; background: #eaf6f7; }
+.deadline-pill { color: var(--primary-ink); background: var(--surface-brand); }
 
 /* Analytics */
 .analytics-hero { padding: 28px 30px; border-color: #dce7ed; border-radius: var(--radius); background: linear-gradient(110deg,#e9f2f7,#f4fafb); }
@@ -251,7 +251,7 @@ pre { background: var(--surface-subtle); color: var(--text); line-height: 1.6; b
 .analytics-metric { padding: 21px 22px; }
 .analytics-metric > span { color: var(--muted); font-size: 12px; }
 .analytics-metric strong { color: var(--navy); font-size: 32px; font-weight: 600; }
-.analytics-metric small, .analytics-period-caption { color: #748397; }
+.analytics-metric small, .analytics-period-caption { color: var(--text-muted); }
 .analytics-metric.attention { border-color: #eedfcf; background: #fffcf8; }
 .analytics-metric.attention strong { color: #a06a35; }
 .analytics-chart svg text { fill: #73869a; font-size: var(--fs-caption); }

@@ -135,7 +135,7 @@
 }
 
 .course-draft {
-  color: #d97706;
+  color: var(--warning);
   font-weight: 600;
 }
 

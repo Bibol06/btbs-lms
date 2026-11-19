@@ -10,7 +10,8 @@
   --border-hover: #a9b6c5;
   --text: #182b43;
   --text-muted: #5b6b80;
-  --text-subtle: #7b8a9c;
+  /* AA (>= 4.5:1) on every surface; the old #7b8a9c was 3.2:1 on the canvas (QA-020). */
+  --text-subtle: #5b6b80;
   --heading: #102542;
   --primary: #087f88;
   --primary-hover: #066a72;
