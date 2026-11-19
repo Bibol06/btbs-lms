@@ -4,7 +4,8 @@ import './CourseCover.css'
 export default function CourseCover({ courseId, title, compact = false }: {
   courseId: number; title: string; compact?: boolean
 }) {
-  const words = title.match(/[\p{L}\p{N}+#]+/gu) ?? []
+  // Ignore a prefix such as "QA:" or "Демо:"; it produced initials like "QЧ" (QA-027).
+  const words = (title.includes(':') ? title.slice(title.lastIndexOf(':') + 1) : title).match(/[\p{L}\p{N}+#]+/gu) ?? []
   const initials = /Python/i.test(title) ? 'Py' : /C\+\+/i.test(title) ? 'C++' :
     words.slice(0, 2).map(word => [...word][0]).join('').toUpperCase() || 'BT'
   return <div className={`btbs-course-cover ${compact ? 'btbs-course-cover-compact' : ''}`} data-tone={courseId % 3} aria-hidden="true" translate="no">
