@@ -18,6 +18,7 @@ import { QuizEditor } from '../study/Quizzes'
 import { loadStepChoices, type StepChoices } from './stepChoices'
 import ConfirmAction from '../study/ConfirmAction'
 import LessonPlayer, { CoursePlan } from './LessonPlayer'
+import { titleWarnings } from '../../titleQuality'
 import TeacherMediaUploader from '../teacher/TeacherMediaUploader'
 import { Discussion } from '../communication/Communication'
 
@@ -58,6 +59,7 @@ function CurriculumEditor({ courseId, runId, editor, modules, onSaved, onCancel 
   const [uploadingContent, setUploadingContent] = useState(false)
   const [contentDraft, setContentDraft] = useState(editor.kind === 'step' ? editor.initial?.content ?? '' : '')
   const [error, setError] = useState('')
+  const [titleDraft, setTitleDraft] = useState(editor.initial?.title ?? '')
   const [busy, setBusy] = useState(false)
   useEffect(() => {
     let alive = true
@@ -108,7 +110,8 @@ function CurriculumEditor({ courseId, runId, editor, modules, onSaved, onCancel 
       window.requestAnimationFrame(() => quizSelect.current?.focus())
     }} onCancel={() => { setQuizBuilder(null); quizSelect.current?.focus() }} />}
     <form className="study-form" onSubmit={save}><h3>{initial ? tr("Редактирование") : tr("Создание")}: {editor.kind === 'module' ? tr("модуль") : editor.kind === 'lesson' ? tr("урок") : tr("шаг")}</h3>
-      <label>{tr("Название")}<input name="title" required maxLength={200} defaultValue={initial?.title} /></label>
+      <label>{tr("Название")}<input name="title" required maxLength={200} defaultValue={initial?.title} onChange={e => setTitleDraft(e.target.value)} /></label>
+      {titleWarnings(titleDraft, editor.kind === 'step' ? editor.lesson.steps.filter(s => s.id !== editor.initial?.id).map(s => s.title) : []).map(w => <p key={w} className="field-hint warning" role="status">⚠ {w}</p>)}
       {editor.kind === 'module' && editor.initial && <><a href={`#course=${courseId}&run=${runId}&tab=plan`}>{tr('Сроки модуля')}</a><label>{tr("Сначала завершить модуль")}<select name="prerequisite_id" defaultValue={editor.initial.prerequisite_id ?? ''}><option value="">{tr("Нет ограничения")}</option>{modules.filter(m => m.id !== editor.initial?.id).map(m => <option value={m.id} key={m.id}>{ct(m, "title")}</option>)}</select></label></>}
       {editor.kind === 'lesson' && <><label>{tr("Модуль")}<select name="module_id" defaultValue={editor.module.id}>{modules.map(m => <option value={m.id} key={m.id}>{ct(m, "title")}</option>)}</select></label>{!editor.initial && <LessonContentEditor label={tr('Первый текстовый шаг')} value={contentDraft} onChange={setContentDraft} rows={5} maxLength={50000} />}</>}
       {editor.kind === 'step' && <>

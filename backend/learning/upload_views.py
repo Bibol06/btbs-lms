@@ -110,7 +110,8 @@ def upload_lesson_material(request, lesson_id):
     title = request.POST.get("title", "").strip()
 
     if not title:
-        title = Path(uploaded_file.name).stem[:200]
+        from .naming import readable_title
+        title = readable_title(uploaded_file.name)
 
     if len(title) > 200:
         return JsonResponse(

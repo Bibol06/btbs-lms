@@ -69,7 +69,8 @@ def initiate(request, lesson_id):
         raise ApiError('Этот формат файла не поддерживается')
     size = integer(data, 'size', 1, (2048 if extension in VIDEO_EXTENSIONS else 20)*1024*1024)
     content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-    title = text(data, 'title', 200) or Path(filename).stem
+    from .naming import readable_title
+    title = text(data, 'title', 200) or readable_title(filename)
     multipart = data.get('multipart') is True
     fingerprint = text(data, 'fingerprint', 64)
     if multipart:
