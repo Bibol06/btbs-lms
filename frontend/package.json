@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "e2e": "playwright test",
-    "e2e:sweep": "playwright test sweep"
+    "e2e:sweep": "playwright test sweep",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

@@ -69,3 +69,15 @@ A single app without a router. `App.tsx` plus `workspaces.ts` derive the page fr
 - Media: `MEDIA_STORAGE_MODE` is `local` or `s3` (`media_storage.HybridMediaStorage`, CloudFront signed URLs in `cdn.py`). Nginx returns 404 for `/admin/` and `/media/`.
 - Redis runs with `volatile-lru` because it is both cache (db 1) and Celery broker (db 2). Cache entries must always have a timeout.
 - `.local/` holds runtime state (logs, backups, backup keys, WASI runtime, load reports, demo credentials) and is git-ignored.
+
+## UI quality rules (QA, see docs/qa/QA_REPORT.md)
+
+- Every user-facing string goes through `t()`/`tr()` and is added to BOTH `frontend/src/i18n/messages.json` and `backend/locales/messages.json` with kk and en. `npm run check:i18n` enforces this in CI.
+- Flex/grid children that hold text get `min-width: 0`. Content titles (course/lesson/step names) wrap or use an ellipsis together with a `title` tooltip. Buttons keep one-line labels but must never widen their container.
+- Never show technical values to users: file names, ids, enum values, `undefined`/`null`/`NaN`. Number things by position ("Модуль N · Урок M · Шаг K"), not by repeating titles.
+- One primary (filled) button per view; form buttons keep their natural width.
+- Check every new or changed page at 1440 and 390 px and in ru/kk/en.
+- Every bug fix comes with a test that would have caught it (backend unit test or an e2e/audit check).
+- Before finishing a task, run: `npm run lint`, `npm run build`, `npm run check:i18n`, the backend tests, and `npm run e2e` against the QA environment.
+
+QA environment (never the working DB): `powershell -File tools/qa/start_qa.ps1 [-Reset]` starts backend 8100 (`config.qa_settings`, database `lms_qa`, local media, no S3/mail/Sentry) and Vite 5174. Accounts and ids: `.local/qa/qa-accounts.json`. `npm run e2e` runs the smoke suite with the UI audit; `npm run e2e:sweep` runs the long every-page × role × width × language sweep, with results in `.local/qa/sweep/`. Playwright uses the installed Edge locally and one worker by default. With 12 GB RAM, more workers next to PostgreSQL, the IDE and dev servers crashed PostgreSQL (QA-001).

@@ -26,10 +26,36 @@ Severity: 🔴 critical · 🟠 medium · 🟡 minor · ⚪ data (content proble
 
 | Severity | Found | Fixed | Deferred | Data |
 |---|---:|---:|---:|---:|
-| 🔴 | 1 | 0 | 0 | — |
-| 🟠 | 7 | 0 | 0 | — |
-| 🟡 | 16 | 0 | 0 | — |
-| ⚪ | 5 | — | — | 5 |
+| 🔴 | 1 | 1 (mitigated) | 0 | — |
+| 🟠 | 7 | 6 | 1 (QA-015 unconfirmed) | — |
+| 🟡 | 16 | 9 | 7 | — |
+| ⚪ | 5 | 3 (UI help added) | — | 5 |
+
+## Status per finding
+
+| ID | Status | Commit / reason |
+|---|---|---|
+| QA-001 | ✅ mitigated | `0bc9047`: e2e uses 1 worker by default; memory guidance in `CLAUDE.md`. The machine itself still has 12 GB shared by many tools. |
+| QA-010, QA-011 | ✅ | `6a4ee71`: scroll regions are focusable and labelled, edge shadows show hidden columns; tab rows scroll on phones. |
+| QA-012, QA-013 | ✅ | `06732f8`: title-carrying buttons wrap; other buttons cannot widen their container; outline items have tooltips. |
+| QA-014 | ✅ | `06732f8`: "Модуль N · Урок M · Шаг K" from ordinal numbers (API + regression test `workspace/test_preview_numbering.py`). |
+| QA-015 | ⏸ | Not confirmed. Sweep timings include harness waits; needs a direct API timing check. |
+| QA-016 | ✅ | `39b5ac8`: one primary button, natural-width form buttons, plan editor replaced with a link to its tab. |
+| QA-020 | ✅ | `6ebb9d0`: `--text-subtle` and legacy greys now pass AA (4.5:1+) on all surfaces. |
+| QA-021, QA-022 | ✅ | `06732f8`: loading state in the preview; "Пройдено в предпросмотре шагов: N". "Оригинал сообщения" kept (it labels the untranslated original of a discussion message). |
+| QA-024–QA-028, QA-033 | ✅ | `722aa49`: player tooltips, no stretched empty card, dates without seconds, cover initials ignore "QA:"-style prefixes, compact language badge, no duplicate fullscreen attribute. |
+| QA-023 | ⏸ | Guest 401 on `/api/auth/me/` is the app's session probe. Changing it is an API contract change; the e2e suite treats it as expected. |
+| QA-029, QA-030, QA-031, QA-035 | ⏸ | Legacy styling and course cards belong to redesign phases 3–4 (`frontend/REDESIGN_PLAN.md`); no functional error. |
+| QA-032 | ⏸ | GET views finalizing quiz attempts are a safety net while Windows dev runs without Celery beat; remove together with the beat-only setup. |
+| QA-034 | ⏸ | A 403 for a direct link to a locked step is the correct response; the player shows the lock message. |
+| QA-040–QA-042 | ⚪ + UI help | `8e9af8b`: readable default titles for uploads (`learning/naming.py` + test), pre-filled editable title in the uploader, editor warnings for digit-only, file-name-like and duplicate titles. Existing content is not renamed. |
+| QA-043, QA-044 | ⚪ | Content issues (C++ course with Python content, empty descriptions); the readiness check already lists missing descriptions. |
+
+## Guards added (step 3)
+- `npm run e2e` (`frontend/e2e/smoke.spec.ts`): key pages for guest, student, teacher and admin at 1440 and 390 px through the UI audit, which fails on console/HTTP errors, overflow, clipped text, raw values, duplicate labels, broken media and axe serious/critical. Scenarios: "Понятно!" completes a step, a Python practice run shows output, preview numbering is unique.
+- `npm run check:i18n`: catalogs complete and identical, no raw Russian JSX text. Runs in CI.
+- CI job `e2e`: PostgreSQL service, `seed_qa`, Django with `qa_settings`, Vite, Playwright chromium, `npm run e2e`.
+- `CLAUDE.md` "UI quality rules" and `.github/pull_request_template.md`.
 
 **What is in good shape:**
 - **Translations.** kk has no untranslated UI strings. In en, every Cyrillic string found is authored content: course, lesson and step titles and people's names.
