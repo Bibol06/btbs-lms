@@ -32,6 +32,7 @@ import './Workspace.css'
 import './Brand.css'
 import './pages/workspace/WorkspaceHub.css'
 import './styles/shell.css'
+import './styles/patterns.css'
 import AccountMenu from './components/AccountMenu'
 
 const roles = localizedLabels({

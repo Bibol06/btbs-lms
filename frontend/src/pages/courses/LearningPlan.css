@@ -1,18 +1,25 @@
-.learning-plan { min-width:0; }
-.plan-editor { border:0; padding:0; margin:0; min-width:0; display:grid; gap:18px; }
-.plan-modules { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr)); }
-.plan-module,.plan-checkpoint { border:1px solid #e1eaf1; border-radius:12px; padding:20px; background:#f9fcfd; min-width:0; }
-.plan-module { display:grid; gap:12px; align-content:start; }
-.plan-module h3 { margin:0; }
-.module-deadline-counts { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:13px; }
-.plan-module .module-deadline { margin:0; }
-.plan-checkpoint { margin-bottom:12px; }
-.plan-checkpoint .form-grid { margin-bottom:15px; }
-.learning-plan label { display:grid; gap:7px; font-size:13px; color:#526b80; }
-.learning-plan label.check { display:flex; margin:12px 0; }
-.learning-plan input,.learning-plan select { min-width:0; width:100%; box-sizing:border-box; }
-.learning-plan input:not([type=checkbox]),.learning-plan select { color:var(--ink,#122b46); background:white; border:1px solid #d7e0e8; border-radius:8px; padding:11px 13px; font:inherit; font-size:13px; line-height:1.5; }
-.learning-plan input:focus-visible,.learning-plan select:focus-visible { outline:3px solid #27bfca; outline-offset:2px; }
-.learning-plan input:disabled,.learning-plan select:disabled { background:#edf2f5; color:#64798b; }
-.learning-plan input[type=checkbox] { width:auto; }
-@media(max-width:600px) { .plan-module,.plan-checkpoint { padding:15px; } }
+/* Learning plan (redesign phase 5: tokens; no outer card, module cards only). */
+.learning-plan { min-width: 0; display: grid; gap: var(--sp-5); }
+.learning-plan > .section-heading { align-items: flex-end; }
+.learning-plan > h3 { margin: var(--sp-2) 0 0; font-size: var(--fs-h3); line-height: var(--lh-h3); color: var(--heading); }
+.plan-editor { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: var(--sp-5); }
+.plan-editor > h3 { margin: var(--sp-2) 0 0; font-size: var(--fs-h3); line-height: var(--lh-h3); }
+.plan-modules { display: grid; gap: var(--sp-4); grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); }
+.plan-module, .plan-checkpoint { border: 1px solid var(--border); border-radius: var(--r-card); padding: var(--sp-5); background: var(--surface); min-width: 0; }
+.plan-module { display: grid; gap: var(--sp-2); align-content: start; }
+.plan-module h3, .plan-checkpoint h3 { margin: 0; font-size: var(--fs-h3); line-height: var(--lh-h3); color: var(--heading); overflow-wrap: anywhere; }
+.plan-module p, .plan-checkpoint p { margin: 0; color: var(--text-muted); font-size: var(--fs-small); line-height: var(--lh-small); }
+.plan-module > .button-link { justify-self: start; margin-top: var(--sp-2); }
+.plan-caption { color: var(--text-muted); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.module-deadline-counts { display: flex; flex-wrap: wrap; gap: 6px var(--sp-3); font-size: var(--fs-small); }
+.plan-module .module-deadline { margin: 0; }
+.plan-checkpoint { display: grid; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+.plan-checkpoint .form-grid { margin-bottom: var(--sp-3); }
+.learning-plan label { display: grid; gap: 6px; font-size: var(--fs-small); color: var(--text); font-weight: 500; }
+.learning-plan label.check { display: flex; margin: var(--sp-3) 0; }
+.learning-plan input, .learning-plan select { min-width: 0; width: 100%; box-sizing: border-box; }
+.learning-plan input:not([type=checkbox]), .learning-plan select { min-height: var(--ctl-md); color: var(--text); background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-ctl); padding: 7px var(--sp-3); font: inherit; font-size: var(--fs-body); line-height: var(--lh-body); }
+.learning-plan input:focus-visible, .learning-plan select:focus-visible { outline: none; border-color: var(--focus); box-shadow: var(--focus-ring); }
+.learning-plan input:disabled, .learning-plan select:disabled { background: var(--surface-subtle); color: var(--text-muted); }
+.learning-plan input[type=checkbox] { width: auto; }
+@media (max-width: 600px) { .plan-module, .plan-checkpoint { padding: var(--sp-4); } }
