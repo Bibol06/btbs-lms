@@ -8,6 +8,8 @@ const c = qa.courses, r = qa.runs, s = qa.steps
 const pages: [Role, string, string][] = [
   ['guest', 'catalog', '#page=catalog'],
   ['guest', 'course card', `#course=${c.main}`],
+  ['student', 'catalog', '#page=catalog'],
+  ['teacher', 'catalog', '#page=catalog'],
   ['student', 'my learning', '#page=learning'],
   ['student', 'deadlines', '#page=deadlines'],
   ['student', 'course start page', `#course=${c.main}&run=${r.cohort}&tab=lessons`],
@@ -81,4 +83,39 @@ test('teacher: preview numbers steps uniquely even when titles repeat', async ({
   const labels = await page.locator('.preview-outline button small').allInnerTexts()
   expect(labels.length).toBeGreaterThan(1)
   expect(new Set(labels).size).toBe(labels.length)
+})
+
+test('catalog: search, "my courses" filter and progress on enrolled cards', async ({ page }) => {
+  await signIn(page, 'student', 'ru')
+  await open(page, '#page=catalog')
+  const cards = page.locator('.catalog-card:not(.catalog-skeleton)')
+  await expect(cards).not.toHaveCount(0)
+  const total = await cards.count()
+  // Enrolled cards link to the run their progress belongs to.
+  const main = cards.filter({ has: page.locator(`a[href^="#course=${c.main}&run="]`) })
+  await expect(main.getByRole('progressbar')).toHaveCount(1)
+  await page.getByRole('searchbox', { name: 'Поиск курсов' }).fill('нет-такого-курса-xyz')
+  await expect(page.getByRole('heading', { name: 'Ничего не найдено' })).toBeVisible()
+  await expect(page).toHaveURL(/q=/)
+  await page.getByRole('button', { name: 'Сбросить фильтры' }).first().click()
+  await expect(cards).toHaveCount(total)
+  await expect(page.getByRole('searchbox', { name: 'Поиск курсов' })).toBeFocused()
+  await page.getByRole('button', { name: 'Мои курсы' }).click()
+  await expect(page).toHaveURL(/show=mine/)
+  const mine = await cards.count()
+  expect(mine).toBeGreaterThan(0)
+  expect(mine).toBeLessThan(total)
+  // Filters survive opening a course and coming back through the menu.
+  await main.locator('h3 a').click()
+  await expect(page).toHaveURL(new RegExp(`#course=${c.main}&run=`))
+  await open(page, '#page=catalog')
+  await expect(page.getByRole('button', { name: 'Мои курсы' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(cards).toHaveCount(mine)
+})
+
+test('catalog: a shared "my courses" link does not hide courses from a guest', async ({ page }) => {
+  await signIn(page, 'guest', 'ru')
+  await open(page, '#page=catalog&show=mine&lang=xx')
+  await expect(page.locator('.catalog-card:not(.catalog-skeleton)')).not.toHaveCount(0)
+  await expect(page.getByRole('heading', { name: 'Ничего не найдено' })).toHaveCount(0)
 })
