@@ -2,7 +2,6 @@ import { ct } from '../../i18n/content'
 import { t as tr, getLanguage, countLabel } from '../../i18n/language'
 import CourseLanguageBadge from '../../components/CourseLanguageBadge'
 import CourseCover from '../../components/CourseCover'
-import CourseSummary from '../../components/CourseSummary'
 import LessonContentEditor from '../../components/LessonContentEditor'
 import WorkspaceHome from '../workspace/WorkspaceHome'
 import { CourseTools } from '../workspace/AuthorTools'
@@ -82,19 +81,32 @@ export default function TeacherDashboard() {
       refresh()
     } catch (err) { setError(errorMessage(err)) } finally { setBusy(null) }
   }
-  return <div className="teacher-dashboard">
-    <div className="section-heading"><div><h2>{tr("Мои курсы и группы")}</h2></div><button onClick={() => setEditor('new')}>{tr("+ Создать курс")}</button></div>
+  const published = courses.filter(c => c.is_published).length
+  return <div className="page teacher-dashboard">
+    <header className="page-header">
+      <div><h2 className="page-title">{tr("Мои курсы и группы")}</h2>
+        {!loading && <p className="page-sub">{tr('Курсов: {0} · опубликовано: {1} · черновиков: {2}', [String(courses.length), String(published), String(courses.length - published)])}</p>}</div>
+      <button onClick={() => setEditor('new')}>{tr("+ Создать курс")}</button>
+    </header>
     {error && <p role="alert" className="error">{tr(error)}</p>}
-    <WorkspaceHome />
     {editor && <CourseForm key={editor === 'new' ? 'new' : editor.id} initial={editor === 'new' ? undefined : editor} onSaved={() => { setEditor(null); refresh() }} onCancel={() => setEditor(null)} />}
-    <div className="teacher-stats teacher-stats-compact"><div className="card"><h3>{courses.length}</h3><p>{tr("Всего курсов")}</p></div><div className="card"><h3>{courses.filter(c => c.is_published).length}</h3><p>{tr("Опубликованы")}</p></div><div className="card"><h3>{courses.filter(c => !c.is_published).length}</h3><p>{tr("Черновики")}</p></div></div>
-    {loading && <p>{tr("Загрузка курсов…")}</p>}
-    {!loading && !courses.length && <p className="empty-state">{tr("Создайте первый курс и добавьте уроки.")}</p>}
-    <div className="teacher-courses">{courses.map(course => <article className="study-card teacher-course-item" key={course.id}>
-      <CourseCover courseId={course.id} title={ct(course, 'title')} compact />
-      <div className="teacher-course-body"><h3>{ct(course, "title")}</h3><CourseLanguageBadge course={course} /><CourseSummary course={course} courseId={course.id} /><p>{countLabel(course.lessons_count, "lesson")} · <span className="badge">{course.is_published ? tr("Опубликован") : tr("Черновик")}</span></p>
-      <div className="action-row"><button onClick={() => { window.location.hash = `course=${course.id}` }}>{tr("Открыть курс")}</button><CourseTools courseId={course.id} title={course.title} displayTitle={ct(course, "title")} canEdit={course.can_edit_content} onEdit={() => setEditor(course)} onPublish={() => publish(course)} published={course.is_published} busy={busy === course.id} /><a className="button-link" href={`#course=${course.id}&tab=results`}>{tr("Ученики и ответы →")}</a></div>
-      </div>
-    </article>)}</div>
+    <WorkspaceHome />
+    <section className="teacher-course-list" aria-labelledby="teacher-courses-title">
+      <h3 className="section-title" id="teacher-courses-title">{tr("Курсы")}</h3>
+      {loading && <p className="muted" role="status">{tr("Загрузка курсов…")}</p>}
+      {!loading && !courses.length && <div className="empty"><h3>{tr("Курсов пока нет")}</h3><p>{tr("Создайте первый курс и добавьте уроки.")}</p><button onClick={() => setEditor('new')}>{tr("+ Создать курс")}</button></div>}
+      {courses.length > 0 && <ul className="list">{courses.map(course => <li className="list-row teacher-course-row" key={course.id}>
+        <div className="teacher-course-thumb" aria-hidden="true"><CourseCover courseId={course.id} title={ct(course, 'title')} compact /></div>
+        <div className="list-row-main">
+          <p className="list-row-title"><a href={`#course=${course.id}`} title={ct(course, "title")}>{ct(course, "title")}</a></p>
+          <p className="list-row-meta">{countLabel(course.lessons_count, "lesson")}<CourseLanguageBadge course={course} /></p>
+        </div>
+        <div className="list-row-side">
+          <span className={`badge ${course.is_published ? 'is-success' : 'is-warning'}`}>{course.is_published ? tr("Опубликован") : tr("Черновик")}</span>
+          <a className="teacher-course-link" href={`#course=${course.id}&tab=results`}>{tr("Ученики и ответы")}</a>
+          <CourseTools courseId={course.id} title={course.title} displayTitle={ct(course, "title")} canEdit={course.can_edit_content} onEdit={() => setEditor(course)} onPublish={() => publish(course)} published={course.is_published} busy={busy === course.id} />
+        </div>
+      </li>)}</ul>}
+    </section>
   </div>
 }

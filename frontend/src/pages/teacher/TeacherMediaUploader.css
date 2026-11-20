@@ -6,8 +6,8 @@
 .media-toggle {
   width: 100%;
   padding: 13px;
-  background: #e0e7ff;
-  color: #1e40af;
+  background: var(--border);
+  color: var(--primary-ink);
   border: none;
   border-radius: 9px;
   font-weight: 600;
@@ -15,13 +15,13 @@
 }
 
 .media-toggle:hover {
-  background: #c7d2fe;
+  background: var(--border-strong);
 }
 
 .media-panel {
   margin-top: 15px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
 }
@@ -33,7 +33,7 @@
 }
 
 .media-panel label {
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 
@@ -41,9 +41,9 @@
 .media-panel select {
   width: 100%;
   padding: 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  background: white;
+  background: var(--surface);
   font: inherit;
 }
 
@@ -52,8 +52,8 @@
 }
 
 .media-panel input::file-selector-button {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--border);
+  color: var(--primary-ink);
   border: none;
   border-radius: 6px;
   padding: 10px;
@@ -62,8 +62,8 @@
 }
 
 .selected-file {
-  background: #eff6ff;
-  color: #1e40af;
+  background: var(--bg);
+  color: var(--primary-ink);
   padding: 12px;
   border-radius: 8px;
   overflow-wrap: anywhere;
@@ -71,8 +71,8 @@
 
 .media-submit {
   padding: 14px;
-  background: #2563eb;
-  color: white;
+  background: var(--accent);
+  color: var(--surface);
   border: none;
   border-radius: 9px;
   font-weight: 600;
@@ -85,16 +85,16 @@
 }
 
 .media-success {
-  color: #15803d;
+  color: var(--primary-ink);
 }
 
 .media-error {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .media-preview {
   display: block;
   margin-top: 12px;
-  color: #2563eb;
+  color: var(--text-muted);
   overflow-wrap: anywhere;
 }
