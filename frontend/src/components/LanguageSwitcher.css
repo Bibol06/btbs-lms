@@ -15,9 +15,9 @@
 .language-hint { display: block; margin-top: 12px; color: var(--text-muted); font-size: var(--fs-caption); line-height: 1.6; }
 .language-save-error { position: absolute; right: 0; top: calc(100% + 8px); z-index: 115; width: 230px; padding: 10px; background: #fff6dd; border: 1px solid #e6cd8c; border-radius: 10px; font-size: var(--fs-caption); }
 .language-save-error button { background: transparent; color: #785415; text-decoration: underline; padding: 2px; border: 0; }
-.language-full .language-trigger { min-width: 180px; justify-content: flex-start; font-size: 13px; }
+.language-full .language-trigger { min-width: 180px; justify-content: flex-start; font-size: var(--fs-body); }
 .language-full .language-popover { left: 0; right: auto; }
-.profile-language { margin: 22px 0; }
+.profile-language { margin: 0; }
 .profile-language h3 { margin-top: 0; }
 .sidebar nav .sidebar-logout { display: none; }
 .auth-language { float: right; margin: 0 0 10px 12px; }

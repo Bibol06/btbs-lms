@@ -1,0 +1,25 @@
+/* Profile (redesign phase 5): plain header instead of the gradient cover; cards from patterns.css. */
+.profile-page .profile-head { display: flex; flex-direction: row; align-items: center; gap: var(--sp-4); flex-wrap: wrap; min-width: 0; }
+.profile-page .profile-avatar { flex: none; width: 64px; height: 64px; border: 0; border-radius: 50%; background: var(--surface-brand); color: var(--primary-ink); font-size: var(--fs-h1); font-weight: 600; }
+.profile-page .profile-identity { display: grid; gap: var(--sp-1); flex: 1; min-width: 0; }
+.profile-page .profile-identity .page-sub { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); font-size: var(--fs-small); }
+.profile-page .profile-identity .page-sub > span:not(:first-child)::before { content: '·'; margin-right: var(--sp-3); }
+.profile-page .profile-identity .page-sub > .person-role + span::before { content: none; }
+.profile-page .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: var(--sp-6); align-items: start; }
+.profile-page .profile-bio { margin: 0 0 var(--sp-4); color: var(--text); }
+.profile-page .profile-facts { display: grid; gap: var(--sp-2); margin: 0; padding-top: var(--sp-4); border-top: 1px solid var(--border); font-size: var(--fs-small); line-height: var(--lh-small); }
+.profile-page .profile-facts > div { display: flex; flex-wrap: wrap; gap: var(--sp-1); min-width: 0; }
+.profile-page .profile-facts dt { color: var(--text-muted); }
+.profile-page .profile-facts dd { margin: 0; color: var(--text); overflow-wrap: anywhere; }
+.profile-page .profile-metrics { display: flex; gap: var(--sp-10); margin: 0 0 var(--sp-4); }
+.profile-page .profile-metrics > div { display: grid; gap: 2px; }
+.profile-page .profile-metrics strong { font-size: var(--fs-h1); line-height: var(--lh-h1); color: var(--heading); font-weight: 600; font-variant-numeric: tabular-nums; }
+.profile-page .profile-metrics span { color: var(--text-muted); font-size: var(--fs-small); }
+.profile-page .profile-teaching { display: grid; gap: var(--sp-3); }
+.profile-page form.card { max-width: 720px; }
+@media (max-width: 599px) {
+  .profile-page .profile-head > button { width: 100%; }
+  .profile-page .profile-avatar { width: 48px; height: 48px; font-size: var(--fs-h2); }
+}
+.content .profile-page .profile-language .language-trigger { background: var(--surface); color: var(--text); border: 1px solid var(--border-strong); font-weight: 500; }
+.content .profile-page .profile-language .language-trigger:hover:not(:disabled) { background: var(--surface-subtle); border-color: var(--border-hover); }

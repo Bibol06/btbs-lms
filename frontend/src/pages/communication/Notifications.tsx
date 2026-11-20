@@ -34,10 +34,24 @@ export default function Notifications() {
     try { await apiRequest('/api/communication/notifications/', 'PATCH', id ? { id } : { all: true }); setRevision(v => v + 1); window.dispatchEvent(new Event('lms-notifications-updated')) }
     catch (err) { setError(errorMessage(err)) }
   }
-  return <section className="study-section"><div className="section-heading"><h2>{tr("Уведомления ")}{data ? tr("· {0} непрочитанных", [data.unread]) : ''}</h2><button className="secondary" onClick={() => read()}>{tr("Прочитать все")}</button></div>
+  const pages = data ? Math.max(1, Math.ceil(data.total / 30)) : 1
+  return <section className="page notifications-page" aria-labelledby="notifications-title">
+    <header className="page-header">
+      <div><h2 className="page-title" id="notifications-title">{tr('Уведомления')}</h2>
+        {data && <p className="page-sub">{data.unread ? tr('Непрочитанных: {0}', [String(data.unread)]) : tr('Все уведомления прочитаны')}</p>}</div>
+      {data && data.unread > 0 && <button className="secondary" onClick={() => read()}>{tr('Прочитать все')}</button>}
+    </header>
     {error && <p className="error" role="alert">{tr(error)}</p>}
-    {data?.notifications.map(n => <article className="study-card" key={n.id}><h3>{!n.read_at ? '● ' : ''}{tr(n.title)}</h3><p className="muted">{ct(n, "course")} · {formatDate(n.created_at)}</p><div className="action-row"><a href={n.target} onClick={() => { void read(n.id) }}>{tr("Открыть")}</a>{!n.read_at && <button className="secondary" onClick={() => read(n.id)}>{tr("Отметить прочитанным")}</button>}</div></article>)}
-    {data && !data.notifications.length && <p className="empty-state">{tr("Уведомлений пока нет.")}</p>}
-    <div className="action-row"><button className="secondary" disabled={page === 1} onClick={() => setPage(v => v - 1)}>{tr("Назад")}</button><span>{tr("Страница ")}{page}</span><button className="secondary" disabled={!data || page*30 >= data.total} onClick={() => setPage(v => v + 1)}>{tr("Дальше")}</button></div>
+    {!data && !error && <p className="muted" role="status">{tr('Загрузка…')}</p>}
+    {data && !data.notifications.length && <div className="empty"><h3>{tr('Уведомлений пока нет.')}</h3><p>{tr('Здесь появятся оценки, ответы преподавателя и новости курсов.')}</p></div>}
+    {data && data.notifications.length > 0 && <ul className="list">{data.notifications.map(n => <li key={n.id} className={`list-row notification-row ${n.read_at ? '' : 'is-unread'}`}>
+      <span className="notification-dot" aria-hidden="true" />
+      <div className="list-row-main">
+        <p className="list-row-title"><a href={n.target} onClick={() => { if (!n.read_at) void read(n.id) }}>{tr(n.title)}</a>{!n.read_at && <span className="visually-hidden"> · {tr('Не прочитано')}</span>}</p>
+        <p className="list-row-meta">{ct(n, 'course')} · {formatDate(n.created_at)}</p>
+      </div>
+      {!n.read_at && <div className="list-row-side"><button className="ghost small" onClick={() => read(n.id)}>{tr('Отметить прочитанным')}</button></div>}
+    </li>)}</ul>}
+    {pages > 1 && <nav className="pager" aria-label={tr('Страницы уведомлений')}><button className="secondary small" disabled={page === 1} onClick={() => setPage(v => v - 1)}>{tr('Назад')}</button><span>{tr('Страница {0} из {1}', [String(page), String(pages)])}</span><button className="secondary small" disabled={page >= pages} onClick={() => setPage(v => v + 1)}>{tr('Дальше')}</button></nav>}
   </section>
 }

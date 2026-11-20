@@ -1,36 +1,53 @@
-.deadline-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 18px; padding: 18px 20px; margin: 16px 0; background: #f5f8f2; border: 1px solid #e3eadc; border-radius: 8px; }
-.deadline-summary > div { display: grid; gap: 6px; align-content: start; }
-.deadline-summary small { color: var(--text-muted); font-size: var(--fs-caption); }
-.deadline-summary strong { font-size: 14px; font-weight: 600; color: #526b45; }
-.deadline-note { padding: 12px 16px; background: #eff6ec; border-left: 3px solid #a7c69a; color: #607952; border-radius: 5px; font-size: 13px; }
-.deadline-note.warning { background: #fff7e8; color: #947033; border-left-color: #dfc283; }
-.deadline-note.done { background: #f0f7ed; color: var(--success); }
-.deadline-pill { display: inline-flex; align-items: center; font-size: var(--fs-caption); line-height: 1.6; padding: 4px 9px; border-radius: 6px; color: var(--success); background: #edf5e8; }
+/* Deadlines, agenda and review queue (redesign phase 5: tokens; agenda uses patterns.css). */
+.deadline-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--sp-4); padding: var(--sp-4) var(--sp-5); margin: var(--sp-4) 0; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: var(--r-card); }
+.deadline-summary > div { display: grid; gap: var(--sp-1); align-content: start; }
+.deadline-summary small { color: var(--text-muted); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.deadline-summary strong { font-size: var(--fs-body); font-weight: 600; color: var(--text); }
+.deadline-note { padding: var(--sp-3) var(--sp-4); background: var(--surface-subtle); border-left: 3px solid var(--border-strong); color: var(--text); border-radius: var(--r-ctl); font-size: var(--fs-small); }
+.deadline-note.warning { background: var(--warning-bg); color: var(--warning); border-left-color: var(--warning); }
+.deadline-note.done { background: var(--success-bg); color: var(--success); border-left-color: var(--success); }
+.deadline-pill { display: inline-flex; align-items: center; font-size: var(--fs-caption); line-height: var(--lh-caption); padding: 3px var(--sp-2); border-radius: var(--r-pill); color: var(--success); background: var(--success-bg); }
 .deadline-pill.warning { color: var(--warning); background: var(--warning-bg); }
 .deadline-pill.danger { color: var(--danger); background: var(--danger-bg); }
-.queue-filters { display: flex; flex-wrap: wrap; gap: 8px; }
-.queue-filters button { font-size: 12px; }
-.queue-filters button span { margin-left: 5px; font-variant-numeric: tabular-nums; }
-.queue-mine { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--text-muted); }
-.review-work-list { display: grid; gap: 14px; }
-.review-work { padding: 20px 22px; border: 1px solid #e0e7da; border-radius: 9px; background: white; }
-.review-work.overdue { border-left: 4px solid #d99585; }
-.review-work.soon { border-left: 4px solid #dfc483; }
-.review-work h4 { margin: 0 0 6px; font-size: 16px; }
-.review-work .muted { margin: 5px 0 12px; font-size: 12px; }
-.review-work-dates { display: flex; flex-wrap: wrap; gap: 10px 25px; font-size: 12px; color: var(--text-muted); }
+.queue-filters { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.content .queue-filters button { font-size: var(--fs-small); }
+.queue-filters button span { margin-left: var(--sp-1); font-variant-numeric: tabular-nums; }
+.queue-mine { display: flex; gap: var(--sp-2); align-items: center; font-size: var(--fs-small); color: var(--text-muted); }
+.review-work-list { display: grid; gap: var(--sp-3); }
+.review-work { padding: var(--sp-5); border: 1px solid var(--border); border-radius: var(--r-card); background: var(--surface); }
+.review-work.overdue { border-left: 3px solid var(--danger); }
+.review-work.soon { border-left: 3px solid var(--warning); }
+.review-work h4 { margin: 0 0 6px; font-size: var(--fs-h3); line-height: var(--lh-h3); }
+.review-work .muted { margin: var(--sp-1) 0 var(--sp-3); font-size: var(--fs-caption); }
+.review-work-dates { display: flex; flex-wrap: wrap; gap: 10px var(--sp-6); font-size: var(--fs-caption); color: var(--text-muted); }
 .review-work-dates strong { color: var(--text-muted); font-weight: 500; }
-.review-queue > .section-heading h3 { margin: 0; font-size: 21px; }
-.review-queue > .section-heading p { margin: 8px 0 0; max-width: 690px; }
-.agenda-list { display: grid; gap: 18px; }
-.agenda-task h3 { margin-bottom: 0; }
-.agenda-task.late, .agenda-task.revision { border-left: 4px solid #dfc483; }
-.agenda-task.closed { border-left: 4px solid #d99585; }
-.agenda-page > .section-heading h2 { margin: 0; }
-.agenda-page > .section-heading p.muted { margin-bottom: 0; }
-.submission-status { padding: 10px 0; font-size: 13px; }
-.extension-settings, .reviewer-settings { margin: 12px 0; }
-.extension-settings > summary, .reviewer-settings > summary { color: var(--text-muted); font-size: 13px; }
+.review-queue > .section-heading h3 { margin: 0; font-size: var(--fs-h2); line-height: var(--lh-h2); }
+.review-queue > .section-heading p { margin: var(--sp-2) 0 0; max-width: 690px; }
+.submission-status { padding: 10px 0; font-size: var(--fs-small); }
+.extension-settings, .reviewer-settings { margin: var(--sp-3) 0; }
+.extension-settings > summary, .reviewer-settings > summary { color: var(--text-muted); font-size: var(--fs-small); }
 .deadline-policy > .muted { margin: 0; font-weight: 400; }
-.teacher-dashboard > .review-queue { margin: 25px 0 35px; }
-@media(max-width:650px) { .deadline-summary { grid-template-columns: 1fr; padding: 15px; gap: 14px; } .review-work { padding: 16px; } .deadline-pill { white-space: normal; } }
+.teacher-dashboard > .review-queue { margin: var(--sp-6) 0 var(--sp-8); }
+
+/* Agenda rows: title + course | dates | status badge */
+.agenda-list .list-row { align-items: flex-start; }
+.agenda-kind { margin: 0; color: var(--text-muted); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.agenda-note { margin: var(--sp-1) 0 0; color: var(--warning); font-size: var(--fs-small); }
+.agenda-dates { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, max-content); gap: var(--sp-6); margin: 0; flex: none; }
+.agenda-dates > div { display: grid; gap: 2px; align-content: start; min-width: 0; }
+.agenda-dates dt { color: var(--text-muted); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+.agenda-dates dd { margin: 0; color: var(--text); font-size: var(--fs-small); line-height: var(--lh-small); font-weight: 500; font-variant-numeric: tabular-nums; }
+.agenda-reviewer { display: flex; align-items: center; gap: var(--sp-1); flex-wrap: wrap; font-weight: 400; }
+.agenda-list .badge { flex: none; margin-top: 2px; }
+.agenda-task.late, .agenda-task.revision, .agenda-task.module_overdue { box-shadow: inset 3px 0 var(--warning); }
+.agenda-task.closed { box-shadow: inset 3px 0 var(--danger); }
+.agenda-list > li:first-child { border-radius: var(--r-card) var(--r-card) 0 0; }
+.agenda-list > li:last-child { border-radius: 0 0 var(--r-card) var(--r-card); }
+.agenda-list > li:only-child { border-radius: var(--r-card); }
+
+@container (max-width: 900px) {
+  .agenda-list .list-row { flex-wrap: wrap; }
+  .agenda-list .list-row-main { flex-basis: calc(100% - 160px); }
+  .agenda-dates { order: 3; flex-basis: 100%; grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--sp-3); }
+}
+@media (max-width: 650px) { .deadline-summary { grid-template-columns: 1fr; padding: var(--sp-4); gap: var(--sp-3); } .review-work { padding: var(--sp-4); } .deadline-pill { white-space: normal; } }

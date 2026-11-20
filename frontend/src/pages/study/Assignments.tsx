@@ -133,9 +133,9 @@ function SubmitForm({ assignment, runId, onSaved }: { assignment: Assignment; ru
 }
 
 
-export default function Assignments({ courseId, runId, assignments, manage, canEdit, reviewers, refresh }: {
+export default function Assignments({ courseId, runId, assignments, manage, canEdit, reviewers, refresh, embedded = false }: {
 
-  courseId: number; runId: number; assignments: Assignment[]; manage: boolean; canEdit: boolean; reviewers: Reviewer[]; refresh: () => void
+  courseId: number; runId: number; assignments: Assignment[]; manage: boolean; canEdit: boolean; reviewers: Reviewer[]; refresh: () => void; embedded?: boolean
 
 }) {
 
@@ -166,9 +166,9 @@ export default function Assignments({ courseId, runId, assignments, manage, canE
 
   }
 
-  return <section className="study-section">
+  return <section className={`study-section ${embedded ? 'is-embedded' : ''}`}>
 
-    <div className="section-heading"><h2>{tr("Домашние задания")}</h2>{canEdit && <button onClick={() => setEditor('new')}>{tr("+ Новое задание")}</button>}</div>
+    {!(embedded && !canEdit) && <div className="section-heading"><h2>{tr("Домашние задания")}</h2>{canEdit && <button onClick={() => setEditor('new')}>{tr("+ Новое задание")}</button>}</div>}
 
     {error && <p role="alert" className="error">{tr(error)}</p>}
 
@@ -178,12 +178,12 @@ export default function Assignments({ courseId, runId, assignments, manage, canE
 
     {assignments.map(a => <article className="study-card" key={a.id}>
 
-      <div className="section-heading"><h3>{ct(a, "title")}</h3><span className={`badge ${a.is_published ? 'published' : 'draft'}`}>{a.is_published ? tr("Опубликовано") : tr("Черновик")}</span></div>
+      <div className="section-heading"><h3>{ct(a, "title")}</h3>{manage && <span className={`badge ${a.is_published ? 'is-success' : 'is-warning'}`}>{a.is_published ? tr("Опубликовано") : tr("Черновик")}</span>}</div>
 
       <p className="preserve-text">{ct(a, "description")}</p><RubricPanel key={`${a.id}-${a.max_score}-${a.submissions.length}`} assignmentId={a.id} runId={runId} canEdit={canEdit} />
 
       <div className="deadline-summary"><div><small>{a.window?.source === 'personal' ? tr("Ваш индивидуальный срок") : tr("Сдать до")}</small><strong>{formatDate(a.window?.due_at ?? a.due_at)}</strong></div><div><small>{tr("Приём закрывается")}</small><strong>{formatDate(a.window ? a.window.closes_at : a.allow_late ? a.cutoff_at : a.due_at)}</strong></div><div><small>{tr("Проверка после отправки")}</small><strong>{tr("До ")}{a.review_hours} {tr(" ч.")}</strong></div></div>
-      <p className="muted">{tr("До ")}{a.max_score} {tr(" баллов · Попыток: ")}{a.max_attempts}{a.allow_late && a.window?.source !== 'personal' ? tr(" · Опоздания разрешены, баллы автоматически не снижаются") : ''}</p>
+      <p className="muted">{manage ? <>{tr("До ")}{a.max_score} {tr(" баллов · Попыток: ")}{a.max_attempts}</> : tr("До {0} баллов · использовано попыток: {1}/{2}", [a.max_score, a.submissions.filter(s => s.status !== 'returned').length, a.max_attempts])}{a.allow_late && a.window?.source !== 'personal' ? tr(" · Опоздания разрешены, баллы автоматически не снижаются") : ''}</p>
       {a.window?.source === 'personal' && <p className="deadline-note">{tr("Для вас назначен отдельный срок. ")}{ct(a.window, "note")}</p>}
       {!manage && a.window?.due_at && a.window.allow_late && now >= new Date(a.window.due_at).getTime() && a.window.can_submit && <p className="deadline-note warning">{tr("Сдача с опозданием разрешена.")}</p>}
 
@@ -200,8 +200,7 @@ export default function Assignments({ courseId, runId, assignments, manage, canE
       {manage && <><ScheduleForm courseId={courseId} runId={runId} kind="assignment" activity={a} onSaved={refresh} /><Extensions assignmentId={a.id} runId={runId} /></>}
 
       {!manage && a.submissions[0]?.status === 'submitted' && <SubmissionStatus submission={a.submissions[0]} manage={false} />}
-      <h4>{manage ? tr("Работы студентов ({0})", [a.submissions.length]) : tr("Ваши отправки ({0})", [a.submissions.length])}</h4>
-      {!manage && <p className="muted">{tr("Использовано попыток: ")}{a.submissions.filter(s => s.status !== 'returned').length}/{a.max_attempts}</p>}
+      {(manage || a.submissions.length > 0) && <h4>{manage ? tr("Работы студентов ({0})", [a.submissions.length]) : tr("Ваши отправки ({0})", [a.submissions.length])}</h4>}
 
       {a.submissions.map((s, index) => <details className="submission" id={`submission-${s.id}`} open={submissionId === s.id || (!manage && index === 0 && s.status === 'returned')} key={`${s.id}-${s.graded_at}`}>
 

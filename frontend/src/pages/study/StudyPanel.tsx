@@ -23,7 +23,7 @@ export default function StudyPanel({ courseId, runId, tab, activityId }: { cours
   if (error) return <div><p role="alert" className="error">{tr(error)}</p><button onClick={refresh}>{tr("Повторить")}</button></div>
   if (!data) return <p>{tr("Загрузка…")}</p>
   const selectedActivity = activityId ?? (Number(new URLSearchParams(location.hash.slice(1)).get('activity')) || undefined)
-  if (tab === 'assignments') return <Assignments courseId={courseId} runId={runId} reviewers={data.reviewers} assignments={selectedActivity ? data.assignments.filter(a => a.id === selectedActivity) : data.assignments} manage={data.can_manage} canEdit={data.can_edit} refresh={refresh} />
+  if (tab === 'assignments') return <Assignments courseId={courseId} runId={runId} reviewers={data.reviewers} assignments={selectedActivity ? data.assignments.filter(a => a.id === selectedActivity) : data.assignments} manage={data.can_manage} canEdit={data.can_edit} refresh={refresh} embedded={activityId !== undefined} />
   if (tab === 'quizzes') return <Quizzes courseId={courseId} runId={runId} quizzes={selectedActivity ? data.quizzes.filter(q => q.id === selectedActivity) : data.quizzes} manage={data.can_manage} canEdit={data.can_edit} refresh={refresh} />
   return <Results key={revision} courseId={courseId} runId={runId} data={data} manage={data.can_manage} />
 }

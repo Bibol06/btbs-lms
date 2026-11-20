@@ -12,6 +12,10 @@ const pages: [Role, string, string][] = [
   ['teacher', 'catalog', '#page=catalog'],
   ['student', 'my learning', '#page=learning'],
   ['student', 'deadlines', '#page=deadlines'],
+  ['student', 'notifications', '#page=notifications'],
+  ['student', 'profile', '#profile=me'],
+  ['student', 'results', `#course=${c.main}&run=${r.cohort}&tab=results`],
+  ['student', 'learning plan', `#course=${c.main}&run=${r.cohort}&tab=plan`],
   ['student', 'course start page', `#course=${c.main}&run=${r.cohort}&tab=lessons`],
   ['student', 'player: text', `#course=${c.main}&run=${r.cohort}&step=${s.text}`],
   ['student', 'player: quiz', `#course=${c.main}&run=${r.cohort}&step=${s.quiz}`],
@@ -139,4 +143,18 @@ test('my learning: Continue card, course filters and the ⋯ menu', async ({ pag
   await expect(trigger).toBeFocused()
   await page.getByRole('button', { name: /^Архив/ }).click()
   await expect(page.getByRole('button', { name: /^Архив/ })).toHaveAttribute('aria-pressed', 'true')
+})
+
+test('deadlines: summary line, filter segment with counts and task links', async ({ page }) => {
+  await signIn(page, 'student', 'ru')
+  await open(page, '#page=deadlines')
+  await expect(page.getByText(/Нужно выполнить: \d+ · на проверке: \d+ · на доработке: \d+/)).toBeVisible()
+  const todo = page.getByRole('button', { name: /^Нужно выполнить/ })
+  await expect(todo).toHaveAttribute('aria-pressed', 'true')
+  const rows = page.locator('.agenda-list > li')
+  await expect(rows).not.toHaveCount(0)
+  await expect(rows.first().getByRole('link')).toHaveAttribute('href', /#course=\d+/)
+  await page.getByRole('button', { name: /^Все/ }).click()
+  await expect(page.getByRole('button', { name: /^Все/ })).toHaveAttribute('aria-pressed', 'true')
+  expect(await rows.count()).toBeGreaterThan(0)
 })
