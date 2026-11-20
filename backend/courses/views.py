@@ -51,7 +51,25 @@ def courses_list(request):
         qs = qs.filter(scope).distinct()
     from .catalog_cache import attach_counts
     result = [serialize_course(c, request.user) for c in attach_counts(list(qs.order_by('-created_at', '-id')))]
+    attach_catalog_progress(result, request.user)
     return JsonResponse({'courses': result, 'total': len(result)})
+
+
+def attach_catalog_progress(rows, user):
+    """Percent done for the learner's own enrolled courses, computed in one batch (catalog cards)."""
+    enrolled = [row['id'] for row in rows if row['is_enrolled'] and not row['can_manage']]
+    if not user.is_authenticated or not enrolled:
+        return
+    from learning.services import course_progress_many
+    latest = {}
+    for enrollment in Enrollment.objects.filter(student=user, course_id__in=enrolled, status__in=['active', 'completed']).order_by('id'):
+        latest[enrollment.course_id] = enrollment
+    progress = course_progress_many(list(latest.values()))
+    for row in rows:
+        enrollment = latest.get(row['id'])
+        if enrollment:
+            row['progress'] = progress[enrollment.id]['percent']
+            row['progress_run_id'] = enrollment.run_id
 
 
 @require_POST
