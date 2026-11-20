@@ -180,14 +180,17 @@ export default function Curriculum({ courseId, runId, courseTitle = '', navigati
   }, [courseId, runId, revision])
   useEffect(() => {
     let alive = true
-    if (!selectedId) return
+    // Wait for the structure and never request a locked step: it answers 403 (QA-034).
+    if (!selectedId || !structure) return
+    const info = structure.modules.flatMap(m => m.lessons.flatMap(l => l.steps)).find(s => s.id === selectedId)
+    if (!info || info.locked) return
     apiRequest<{ step: StepDetail }>(`/api/learning/steps/${selectedId}/?run_id=${runId}`).then(data => {
       if (!alive) return
       setStep(data.step); setError(''); window.history.replaceState(null, '', `#course=${courseId}&run=${runId}&step=${selectedId}${new URLSearchParams(location.hash.slice(1)).get('comment') ? `&comment=${new URLSearchParams(location.hash.slice(1)).get('comment')}` : ''}`)
       return apiRequest(`/api/learning/steps/${selectedId}/visit/?run_id=${runId}`, 'POST', { visit_id: visitId })
     }).catch(err => { if (alive) { setStep(null); setError(errorMessage(err)) } })
     return () => { alive = false }
-  }, [selectedId, courseId, runId, revision, visitId])
+  }, [selectedId, courseId, runId, visitId, structure])
   async function action(url: string, method: string, payload?: unknown) {
     try { await apiRequest(url, method, payload); refresh() } catch (err) { setError(errorMessage(err)) }
   }
@@ -245,8 +248,7 @@ export default function Curriculum({ courseId, runId, courseTitle = '', navigati
     {navigationHost && createPortal(outline, navigationHost)}
     <div className="lesson-progress">{structure.can_manage ? <strong>{tr("Программа курса · ")}{structure.progress.total} {tr("обязательных шагов")}</strong> : <><strong>{tr("Пройдено ")}{structure.progress.completed}/{structure.progress.total} {tr(" обязательных шагов · ")}{structure.progress.percent}%</strong><progress max={100} value={structure.progress.percent} /></>}</div>
     {error && <p className="error" role="alert">{tr(error)}</p>}
-    {all.length > 0 && <div className="editor-switch"><button className="secondary" onClick={() => setPlayerOpen(true)}>{tr("▶ Открыть урок как ученик")}</button></div>}
-    {structure.can_edit && <div className="editor-switch"><button className="secondary" onClick={() => { setEditing(v => !v); setEditor(null) }}>{editing ? tr("Завершить редактирование") : tr("Редактировать программу")}</button></div>}
+    {(all.length > 0 || structure.can_edit) && <div className="editor-toolbar">{all.length > 0 && <button className="secondary" onClick={() => setPlayerOpen(true)}>{tr("▶ Открыть урок как ученик")}</button>}{structure.can_edit && <button className={editing ? '' : 'secondary'} onClick={() => { setEditing(v => !v); setEditor(null) }}>{editing ? tr("Завершить редактирование") : tr("Редактировать программу")}</button>}</div>}
     {structure.can_edit && editing && <div className="action-row"><button onClick={() => setEditor({ kind: 'module' })}>{tr("+ Модуль")}</button></div>}
     {editor && <CurriculumEditor key={`${editor.kind}-${editor.initial?.id ?? 'new'}-${editor.kind === 'lesson' ? editor.module?.id : editor.kind === 'step' ? editor.lesson.id : ''}`} courseId={courseId} runId={runId} editor={editor} modules={structure.modules} onSaved={id => { setEditor(null); if (id) setSelectedId(id); refresh() }} onCancel={() => setEditor(null)} />}
     {!navigationHost && <div className="outline-toolbar"><button className="secondary" aria-expanded={!outlineCollapsed} onClick={() => setOutlineCollapsed(v => !v)}>{outlineCollapsed ? tr("Показать программу курса") : tr("Свернуть программу курса")}</button></div>}
@@ -254,7 +256,7 @@ export default function Curriculum({ courseId, runId, courseTitle = '', navigati
       {!navigationHost && outline}
       <div>
         {lesson && <><div className="section-heading"><h2>{ct(lesson, "title")}</h2>{structure.can_edit && editing && module && <button className="secondary" onClick={() => setEditor({ kind: 'lesson', initial: lesson, module })}>{tr("Настроить урок")}</button>}</div>
-          <div className="step-strip">{lesson.steps.map(s => <button key={s.id} className={s.id === selectedId ? '' : 'secondary'} disabled={s.locked} title={`${ct(s, "title")} · ${stepKindCaption(s.kind)}`} onClick={() => select(s.id)}>{s.completed ? '✓' : s.position} · {s.kind === 'code' ? 'Python' : s.kind === 'quiz' ? tr("Тест") : s.kind === 'assignment' ? tr("Задание") : s.kind === 'video' ? tr("Видео") : s.kind === 'file' ? tr("Файл") : tr("Текст")}</button>)}</div>
+          <div className="step-strip">{lesson.steps.map(s => <button key={s.id} className={s.id === selectedId ? '' : 'secondary'} disabled={s.locked} title={`${ct(s, "title")} · ${stepKindCaption(s.kind)}`} onClick={() => select(s.id)}>{s.completed ? '✓' : `${s.position}.`} {s.kind === 'code' ? 'Python' : s.kind === 'quiz' ? tr("Тест") : s.kind === 'assignment' ? tr("Задание") : s.kind === 'video' ? tr("Видео") : s.kind === 'file' ? tr("Файл") : tr("Текст")}</button>)}</div>
         </>}
         {step && step.id === selectedId && <article className="lesson-content"><div className="lesson-step-heading"><h3>{ct(step, "title")}</h3>{structure.can_edit && lesson && <div className="action-row"><button className="secondary" onClick={() => { setEditing(true); setEditor({ kind: 'step', lesson, initial: step }) }}>{tr('Редактировать шаг')}</button><button className="secondary" onClick={() => { setEditing(true); setEditor({ kind: 'step', lesson }) }}>{tr('+ Шаг в урок')}</button></div>}</div>
           {step.kind === 'text' && <RichLessonContent content={ct(step, "content") || tr("Содержание пока не добавлено.")} runId={runId} />}

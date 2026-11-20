@@ -211,7 +211,7 @@ h3 { font-size: var(--fs-h2); }
 .notification-button { display: flex; gap: 5px; align-items: center; }
 .notification-button svg { width: 21px; height: 21px; }
 .sidebar { width: auto; padding: 32px 20px; background: var(--surface); color: var(--text-muted); border-right: 1px solid var(--border); }
-.sidebar-caption { color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; font-size: var(--fs-caption); font-weight: 700; margin: 9px 10px 12px; }
+.sidebar-caption { color: var(--text-muted); font-size: var(--fs-caption); font-weight: 500; margin: 9px 10px 12px; }
 .sidebar nav { margin-top: 0; gap: 5px; }
 .sidebar nav > .sidebar-caption { margin-top: 26px; }
 .sidebar nav button { color: var(--text-muted); border-radius: 7px; font-size: var(--fs-body); padding: 12px 10px; display: flex; gap: 10px; align-items: center; }
@@ -234,7 +234,7 @@ progress::-webkit-progress-value { background: var(--primary); border-radius: 10
 .study-card h3 { margin-top: 0; }
 .study-form input:not([type=radio]):not([type=checkbox]), .study-form textarea, .study-form select { border-color: var(--border-strong); color: var(--text); border-radius: 6px; }
 .muted { color: var(--text-muted); }
-.eyebrow { text-transform: uppercase; font-size: var(--fs-caption); letter-spacing: .1em; color: var(--text-muted); font-weight: 700; margin: 0 0 8px; }
+.eyebrow { font-size: var(--fs-caption); color: var(--text-muted); font-weight: 500; margin: 0 0 8px; }
 .empty-state { background: var(--surface); border-color: var(--border-strong); color: var(--text-muted); }
 .course-tabs { gap: 25px; padding: 0; margin: 4px 0 6px; border-bottom: 1px solid var(--border); flex-wrap: nowrap; overflow-x: auto; }
 .content .course-tabs button { background: transparent; color: var(--text-muted); border-radius: 0; border-bottom: 3px solid transparent; padding: 12px 0; white-space: nowrap; flex-shrink: 0; font-size: var(--fs-body); }
@@ -257,7 +257,7 @@ progress::-webkit-progress-value { background: var(--primary); border-radius: 10
 .editor-switch { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 11px 15px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 8px; font-size: var(--fs-small); color: var(--text-muted); }
 .lesson-page .lesson-layout { grid-template-columns: 265px minmax(0, 1fr); gap: 30px; }
 .lesson-sidebar { background: var(--navy); color: var(--surface); border-radius: 8px; padding: 20px 14px; position: sticky; top: 88px; max-height: calc(100vh - 108px); overflow: auto; }
-.lesson-sidebar > h3 { margin: 0 10px 22px; color: var(--border-hover); font-size: var(--fs-caption); letter-spacing: .08em; text-transform: uppercase; }
+.lesson-sidebar > h3 { margin: 0 10px 22px; color: var(--border-hover); font-size: var(--fs-caption); }
 .module-outline { border-top-color: var(--success); padding-top: 12px; margin-top: 16px; }
 .module-outline h4 { font-size: var(--fs-body); margin: 8px 8px 12px; font-weight: 600; }
 .module-outline > div { padding: 6px 0; gap: 1px; }
@@ -632,7 +632,7 @@ pre { background: var(--surface-subtle); color: var(--text); line-height: 1.6; b
 .login-dialog { display: grid; grid-template-columns: .9fr 1fr; width: min(860px,100%); max-height: calc(100dvh - 56px); overflow-y: auto; border-radius: 22px; box-shadow: 0 30px 100px var(--success); background: var(--surface); }
 .login-brand-panel { display: flex; flex-direction: column; align-items: flex-start; padding: 46px 38px; background: var(--navy); color: var(--surface); }
 .login-brand-panel > img { object-fit: contain; margin-bottom: 28px; }
-.login-brand-label { font-size: var(--fs-caption); letter-spacing: .08em; color: var(--border-hover); text-transform: uppercase; }
+.login-brand-label { font-size: var(--fs-caption); color: var(--border-hover); }
 .login-brand-panel h2 { color: var(--surface); font-size: var(--fs-h1); font-weight: 500; line-height: 1.4; margin: 17px 0; }
 .login-brand-panel p { font-size: var(--fs-small); line-height: 1.9; color: var(--border-hover); margin: 0 0 36px; }
 .login-brand-footer { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--surface); color: var(--border-hover); font-size: var(--fs-caption); width: 100%; }

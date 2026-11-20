@@ -32,7 +32,7 @@ export function Announcements({ courseId, runId, manage, canEdit }: { courseId: 
   }
   const initial = editing === 'new' ? undefined : editing
   return <section className="study-section">
-    <div className="section-heading"><h2>{tr("Новости курса")}</h2>{manage && <button onClick={() => setEditing('new')}>{tr("+ Объявление")}</button>}</div>
+    <div className="section-heading"><h2 className="section-title">{tr("Новости курса")}</h2>{manage && <button onClick={() => setEditing('new')}>{tr("+ Объявление")}</button>}</div>
     {error && <p className="error" role="alert">{tr(error)}</p>}
     {editing && <form className="study-form" key={initial?.id ?? 'new'} onSubmit={save}>
       <label>{tr("Заголовок")}<input name="title" required maxLength={200} defaultValue={initial?.title} /></label>
@@ -103,10 +103,11 @@ export function Conversations({ courseId, runId, manage }: { courseId: number; r
       setMessages(current => [...result.messages, ...current]); setOlder(result.next_before)
     } catch (err) { setError(errorMessage(err)) }
   }
-  return <section className="study-section"><h2>{tr("Личные сообщения по курсу")}</h2>
+  return <section className="study-section"><h2 className="section-title">{tr("Личные сообщения по курсу")}</h2>
     {error && <p className="error" role="alert">{tr(error)}</p>}
     <div className="action-row">{manage ? data?.students.map(s => <button className="secondary" key={s.id} onClick={() => open(s.id)} disabled={busy}>{tr("Написать: ")}{s.student}<RoleBadge label={tr(s.role_label)} /></button>) : <button disabled={busy} onClick={() => open()}>{tr("Написать преподавателю")}</button>}</div>
-    <div className="action-row">{data?.conversations.map(c => <button className={selected === c.id ? '' : 'secondary'} key={c.id} onClick={() => { if (selected !== c.id) { setSelected(c.id); setDraft(''); setMessages([]) } }}>{manage ? <>{c.student}<RoleBadge label={tr(c.student_role_label)} /></> : tr("Преподаватели курса")}{c.unread ? tr(" · {0} новых", [c.unread]) : ''}</button>)}</div>
+    {data && !data.conversations.length && !selected && <div className="empty"><p>{manage ? tr("Переписок пока нет. Выберите ученика, чтобы написать ему.") : tr("Здесь появится переписка с преподавателями курса.")}</p></div>}
+    {Boolean(data?.conversations.length) && <div className="segment" role="group" aria-label={tr("Личные сообщения по курсу")}>{data?.conversations.map(c => <button type="button" aria-pressed={selected === c.id} key={c.id} onClick={() => { if (selected !== c.id) { setSelected(c.id); setDraft(''); setMessages([]) } }}>{manage ? <>{c.student}<RoleBadge label={tr(c.student_role_label)} /></> : tr("Преподаватели курса")}{c.unread ? tr(" · {0} новых", [c.unread]) : ''}</button>)}</div>}
     {selected && <div className="study-card">
       {older && <button className="secondary" onClick={loadOlder}>{tr("Предыдущие сообщения")}</button>}
       {!messages.length && <p className="muted">{tr("Начните диалог.")}</p>}

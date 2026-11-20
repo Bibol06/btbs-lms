@@ -96,3 +96,4 @@
   .ml-card-body { padding: var(--sp-3) var(--sp-4); }
   .ml-card-title { font-size: var(--fs-body); line-height: var(--lh-body); }
 }
+.my-learning-page > .hub-columns { align-items: start; }
