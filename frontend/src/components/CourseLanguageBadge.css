@@ -1,6 +1,6 @@
-.course-language-badge { align-self: flex-start; justify-self: start; width: fit-content; max-width: 100%; display: inline-flex; align-items: baseline; gap: 4px; flex-wrap: wrap; margin: 6px 0 12px; padding: 5px 9px; background: #eef5f7; border: 1px solid #dce9ed; border-radius: 7px; color: #547080; font-size: var(--fs-caption); line-height: 1.5; }
-.course-language-badge strong { color: #31586d; font-weight: 600; }
+.course-language-badge { align-self: flex-start; justify-self: start; width: fit-content; max-width: 100%; display: inline-flex; align-items: baseline; gap: 4px; flex-wrap: wrap; margin: 6px 0 12px; padding: 5px 9px; background: var(--surface-subtle); border: 1px solid var(--border); border-radius: 7px; color: var(--text-muted); font-size: var(--fs-caption); line-height: 1.5; }
+.course-language-badge strong { color: var(--primary-ink); font-weight: 600; }
 .course-language-badge small { font-size: inherit; }
-.course-language-settings { padding: 16px; border: 1px solid #dde7ed; border-radius: 10px; display: grid; gap: 12px; }
+.course-language-settings { padding: 16px; border: 1px solid var(--border); border-radius: 10px; display: grid; gap: 12px; }
 .course-language-settings legend { padding: 0 7px; color: var(--navy); font-weight: 600; }
-.course-language-settings p { margin: 0; font-size: 12px; line-height: 1.7; }
+.course-language-settings p { margin: 0; font-size: var(--fs-caption); line-height: 1.7; }

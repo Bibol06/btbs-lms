@@ -58,7 +58,7 @@
   .catalog-card { flex-direction: row; }
   .catalog-card-cover { flex: none; width: 88px; aspect-ratio: auto; }
   .catalog-card-cover .btbs-course-cover-pattern, .catalog-card-cover .btbs-course-cover-brand { display: none; }
-  .catalog-card-cover .btbs-course-cover-initials { left: 50%; bottom: 50%; transform: translate(-50%, 50%); font-size: 24px; }
+  .catalog-card-cover .btbs-course-cover-initials { left: 50%; bottom: 50%; transform: translate(-50%, 50%); font-size: var(--fs-h2); }
   .catalog-card-badge { top: auto; bottom: var(--sp-2); left: var(--sp-1); right: var(--sp-1); text-align: center; padding: 1px var(--sp-1); }
   .catalog-card-body { padding: var(--sp-3); }
   .catalog-card-title { font-size: var(--fs-body); line-height: var(--lh-body); }

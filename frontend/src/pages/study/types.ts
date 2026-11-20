@@ -1,4 +1,5 @@
-import { getLocale, t as tr } from '../../i18n/language'
+import { t as tr } from '../../i18n/language'
+import { localDate } from '../../i18n/dates'
 export type Submission = {
   review_version: number; rubric_result?: { version: number; criteria: { id: string; label: string; max: number; score: number; comment: string }[] }
   id: number; student_id: number; student: string; student_role_label: string; attempt_no: number; text_answer: string
@@ -33,7 +34,7 @@ export type StudyData = {
 }
 export function formatDate(value: string | null) {
   // Minutes are enough for deadlines and activity; seconds were noise (QA-026).
-  return value ? new Date(value).toLocaleString(getLocale(), { dateStyle: 'medium', timeStyle: 'short' }) : tr("Без ограничения")
+  return value ? localDate(new Date(value), 'datetime') : tr("Без ограничения")
 }
 export function inputDate(value: string | null | undefined) {
   if (!value) return ''

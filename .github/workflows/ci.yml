@@ -86,6 +86,8 @@ jobs:
       - run: npm run lint
       - name: Translations complete, no raw Russian UI text
         run: npm run check:i18n
+      - name: Design tokens only (no raw colors, font sizes or !important)
+        run: npm run check:css
       - run: npm run build
       - name: Audit packages shipped to the browser (blocking)
         run: npm audit --audit-level=high --omit=dev

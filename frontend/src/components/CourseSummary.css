@@ -1,3 +1,3 @@
 .btbs-course-summary { min-width: 0; margin: 12px 0 0; }
-.btbs-course-summary .btbs-course-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; min-height: 4.95em; max-height: 4.95em; overflow: hidden; overflow-wrap: anywhere; white-space: normal; margin: 0; color: var(--muted,#64748b); font-size: 13px; line-height: 1.65; }
-.btbs-course-summary .btbs-course-about { display: inline-block; width: fit-content; margin-top: 7px; color: var(--teal,#087d89); font-size: 12px; text-underline-offset: 3px; }
+.btbs-course-summary .btbs-course-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; min-height: 4.95em; max-height: 4.95em; overflow: hidden; overflow-wrap: anywhere; white-space: normal; margin: 0; color: var(--text-muted); font-size: var(--fs-small); line-height: 1.65; }
+.btbs-course-summary .btbs-course-about { display: inline-block; width: fit-content; margin-top: 7px; color: var(--primary); font-size: var(--fs-caption); text-underline-offset: 3px; }

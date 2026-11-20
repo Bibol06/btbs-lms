@@ -3,11 +3,11 @@
   vertical-align: middle;
   margin-inline: .45em;
   padding: .15em .55em;
-  border: 1px solid #d3dfd4;
+  border: 1px solid var(--border-strong);
   border-radius: 5px;
-  background: #eef5ef;
-  color: #305739;
-  font-size: 12px;
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-size: var(--fs-caption);
   font-weight: 600;
   line-height: 1.5;
   white-space: nowrap;
