@@ -6,7 +6,7 @@ import AdminResponsibilities from './AdminResponsibilities'
 
 import { useEffect, useState, type FormEvent } from 'react'
 import './UsersPage.css'
-import ConfirmAction from '../study/ConfirmAction'
+import MoreMenu from '../../components/MoreMenu'
 
 type User = {
   id: number
@@ -33,6 +33,8 @@ function getCookie(name: string) {
 function UsersPage({ current }: { current?: SessionUser }) {
   const [users, setUsers] = useState<User[]>([])
   const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState('')
+  const [confirming, setConfirming] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -198,17 +200,17 @@ async function deleteStudent(user: User) {
   }
 }
 
-  const filteredUsers = users.filter(user =>
+  const filteredUsers = users.filter(user => (!roleFilter || user.role === roleFilter) && (
     (user.display_name || user.username).toLowerCase().includes(search.toLowerCase()) || user.username.toLowerCase().includes(search.toLowerCase()) ||
     user.email.toLowerCase().includes(search.toLowerCase())
-  )
+  ))
 
   return (
-    <div className="users-page">
-      <div className="users-header">
+    <div className="page users-page">
+      <header className="page-header">
         <div>
-          <h2>{tr("Управление пользователями")}</h2>
-          
+          <h2 className="page-title">{tr("Управление пользователями")}</h2>
+          {!loading && !error && <p className="page-sub">{tr('Всего: {0} · студентов: {1} · преподавателей: {2}', [String(users.length), String(users.filter(u => u.role === 'student').length), String(users.filter(u => u.role === 'teacher').length)])}</p>}
         </div>
 
         <button
@@ -220,7 +222,7 @@ async function deleteStudent(user: User) {
         >
           {showForm ? tr("Отмена") : tr("+ Добавить студента")}
         </button>
-      </div>
+      </header>
 
       {!loading && !error && <AdminResponsibilities current={current} people={users} changed={() => { fetch('/api/auth/users/', { credentials: 'include' }).then(readApiJson).then(value => setUsers(value.users)).catch(() => setError('Не удалось загрузить пользователей')) }} />}
 
@@ -275,29 +277,22 @@ async function deleteStudent(user: User) {
         </div>
       )}
 
-      <div className="users-stats">
-        <div className="card">
-          <h3>{users.length}</h3>
-          <p>{tr("Всего пользователей")}</p>
-        </div>
-
-        <div className="card">
-          <h3>{users.filter(u => u.role === 'student').length}</h3>
-          <p>{tr("Студенты")}</p>
-        </div>
-
-        <div className="card">
-          <h3>{users.filter(u => u.role === 'teacher').length}</h3>
-          <p>{tr("Преподаватели")}</p>
-        </div>
+      <div className="users-filters">
+        <input
+          className="users-search"
+          type="search"
+          aria-label={tr("Поиск по имени или email...")}
+          placeholder={tr("Поиск по имени или email...")}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <select className="users-role-filter" aria-label={tr("Роль")} value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
+          <option value="">{tr("Все роли")}</option>
+          <option value="student">{tr("Студенты")}</option>
+          <option value="teacher">{tr("Преподаватели")}</option>
+          <option value="admin">{tr("Администраторы")}</option>
+        </select>
       </div>
-
-      <input
-        className="users-search"
-        placeholder={tr("Поиск по имени или email...")}
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-      />
 
       {loading && <p>{tr("Загрузка пользователей...")}</p>}
       {error && <p className="users-error">{tr(error)}</p>}
@@ -307,7 +302,6 @@ async function deleteStudent(user: User) {
           <table className="users-table">
             <thead>
               <tr>
-                <th>ID</th>
                 <th>{tr("Имя и логин для входа")}</th>
                 <th>{tr("Email")}</th>
                 <th>{tr("Роль")}</th>
@@ -319,7 +313,6 @@ async function deleteStudent(user: User) {
             <tbody>
               {filteredUsers.map(user => (
                 <tr key={user.id}>
-                  <td>{user.id}</td>
                   <td><strong>{user.display_name}</strong><br /><small className="muted">@{user.username}</small></td>
                   <td>{user.email}</td>
                   <td><RoleBadge label={tr(user.role_label)} /></td>
@@ -327,15 +320,14 @@ async function deleteStudent(user: User) {
                     {user.is_active ? tr("Активен") : tr("Неактивен")}
                   </td>
                   
-<td>
-  {user.role === 'student' && (
-    <ConfirmAction
-      label={deletingId === user.id ? tr("Удаление...") : tr("Удалить")}
-      question={tr("Удалить студента «{0}» и его учебные результаты?", [user.display_name])}
-      disabled={deletingId !== null}
-      onConfirm={() => deleteStudent(user)}
-    />
-  )}
+<td className="users-actions">
+  {user.role === 'student' && (confirming === user.id
+    ? <span className="confirm-action" role="group" aria-label={tr("Подтверждение действия")}>
+        <span>{tr("Удалить студента «{0}» и его учебные результаты?", [user.display_name])}</span>
+        <button type="button" className="danger small" disabled={deletingId !== null} onClick={() => { setConfirming(null); deleteStudent(user) }}>{deletingId === user.id ? tr("Удаление...") : tr("Подтвердить")}</button>
+        <button type="button" className="secondary small" onClick={() => setConfirming(null)}>{tr("Отмена")}</button>
+      </span>
+    : <MoreMenu label={tr("Действия с пользователем {0}", [user.display_name])} items={[{ label: tr("Удалить"), danger: true, onSelect: () => setConfirming(user.id) }]} />)}
 </td>
 
                 </tr>

@@ -1,5 +1,6 @@
 import { ct } from '../i18n/content'
-import { t as tr, getLocale } from '../i18n/language'
+import { localDate } from '../i18n/dates'
+import { t as tr } from '../i18n/language'
 import RoleBadge from '../components/RoleBadge'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import { useEffect, useState, type FormEvent } from 'react'
@@ -56,7 +57,7 @@ export default function Profile({ profileId, onSaved }: { profileId: string; onS
       <div className="form-actions"><button type="button" className="secondary" disabled={busy} onClick={() => setEditing(false)}>{tr("Отмена")}</button><button disabled={busy}>{busy ? tr("Сохранение…") : tr("Сохранить изменения")}</button></div>
     </form> : <div className="profile-grid">
       <article className="card"><h3 className="card-title">{tr("О себе")}</h3><p className="preserve-text profile-bio">{ct(data, "bio") || tr("Пока нет описания.")}</p>
-        <dl className="profile-facts"><div><dt>{tr("На платформе с ")}</dt><dd>{new Date(data.joined_at).toLocaleDateString(getLocale())}</dd></div>{data.email && <div><dt>{tr("Email:")}</dt><dd>{data.email} <span className="muted">{tr(" · виден только вам")}</span></dd></div>}</dl></article>
+        <dl className="profile-facts"><div><dt>{tr("На платформе с ")}</dt><dd>{localDate(new Date(data.joined_at), 'date')}</dd></div>{data.email && <div><dt>{tr("Email:")}</dt><dd>{data.email} <span className="muted">{tr(" · виден только вам")}</span></dd></div>}</dl></article>
       {data.learning && !data.can_teach && data.role === 'student' && <article className="card"><h3 className="card-title">{tr("Моё обучение")}</h3><div className="profile-metrics"><div><strong>{data.learning.active}</strong><span>{tr("В процессе")}</span></div><div><strong>{data.learning.completed}</strong><span>{tr("Завершено")}</span></div></div><a href="#page=learning">{tr("Перейти к моим курсам →")}</a></article>}
       {data.is_own && (data.can_teach || data.role === 'admin') && <article className="card"><h3 className="card-title">{data.role === 'admin' ? tr("Управление платформой") : tr("Моя работа преподавателем")}</h3><p><a href={data.role === 'admin' ? '#page=admin' : '#page=teaching'}>{tr("Перейти в рабочий кабинет →")}</a></p>{data.learning && data.learning.active + data.learning.completed > 0 && <details><summary>{tr("Я также учусь на курсах")}</summary><a href="#page=learning&mode=personal">{tr("Открыть моё личное обучение →")}</a><p><a href="#page=deadlines&mode=personal">{tr("Мои личные задания и сроки →")}</a></p></details>}</article>}
       {data.is_own && <article className="card profile-language"><h3 className="card-title">{tr("Язык платформы")}</h3><LanguageSwitcher full /></article>}

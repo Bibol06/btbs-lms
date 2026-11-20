@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "e2e": "playwright test",
     "e2e:sweep": "playwright test sweep",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:css": "node scripts/check-css.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "6.11.1",

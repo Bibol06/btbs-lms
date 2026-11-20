@@ -67,6 +67,12 @@
   --dur-menu: 150ms;
   --dur-modal: 250ms;
 
+  /* Course cover tints (decorative) and chart series */
+  --cover-0-bg: #e7f1f4; --cover-0-ink: #153653;
+  --cover-1-bg: #edf0f8; --cover-1-ink: #384d77;
+  --cover-2-bg: #e8f3ee; --cover-2-ink: #2e6357;
+  --chart-1: #087f88; --chart-2: #38c3c9; --chart-3: #384d77; --chart-4: #b54708; --chart-5: #2e6357; --chart-6: #a9b6c5;
+
   /* Code editor (dark practice theme) */
   --editor-bg: #05192d;
   --editor-panel: #0b2a47;
@@ -82,13 +88,4 @@
   --editor-on-dark-hover: rgba(255, 255, 255, .08);
   --editor-on-dark-line: rgba(255, 255, 255, .45);
 
-  /* Legacy names used across older CSS; they now point at the tokens above. */
-  --teal: var(--primary);
-  --cyan: var(--accent);
-  --teal-soft: var(--surface-brand);
-  --ink: var(--text);
-  --muted: var(--text-muted);
-  --line: var(--border);
-  --canvas: var(--bg);
-  --radius: var(--r-card);
 }

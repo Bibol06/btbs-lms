@@ -154,3 +154,6 @@
   .course-preview { grid-template-columns: minmax(0, 1fr); }
   .course-preview-cta { position: static; order: -1; }
 }
+
+/* Editor toolbar: one row of actions instead of a bordered box per button (QA-029). */
+.course-main .editor-toolbar { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin: 0 0 var(--sp-4); }

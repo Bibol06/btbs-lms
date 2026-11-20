@@ -1,6 +1,7 @@
 import { ct } from '../../i18n/content'
+import { localDate } from '../../i18n/dates'
 import { auditCaption } from '../../i18n/captions'
-import { t as tr, getLocale } from '../../i18n/language'
+import { t as tr } from '../../i18n/language'
 import RoleBadge from '../../components/RoleBadge'
 import { useEffect, useState, type FormEvent } from 'react'
 import { apiRequest } from '../../api'
@@ -73,7 +74,7 @@ export default function GroupSettings({ courseId, run, canEdit, refresh }: { cou
     {canEdit && <>
       <form className="study-form" onSubmit={e => perform(e, 'create')}><h3>{tr("Новая учебная группа")}</h3><label>{tr("Название группы")}<input name="title" required maxLength={200} /></label><div className="form-grid"><label>{tr("Начало")}<input type="datetime-local" name="starts_at" /></label><label>{tr("Окончание")}<input type="datetime-local" name="ends_at" /></label></div><button className="secondary">{tr("Создать группу")}</button></form>
       <form className="study-form" onSubmit={e => perform(e, 'teacher')}><h3>{tr("Назначить преподавателя")}</h3><label>{tr("Логин преподавателя")}<input name="username" required maxLength={150} /></label><label>{tr("Полномочия")}<select name="scope"><option value="run">{tr("Проверка и ведение только текущей группы")}</option><option value="course">{tr("Редактирование содержания всего курса")}</option></select></label><button className="secondary">{tr("Назначить")}</button></form>
-      <details className="study-card"><summary>{tr("История изменений курса")}</summary>{audit.map((a, i) => <p key={i}>{a.actor}<RoleBadge label={tr(a.actor_role_label)} /> · {auditCaption(a.action)} · {new Date(a.created_at).toLocaleString(getLocale(), { dateStyle: 'medium', timeStyle: 'short' })}</p>)}</details>
+      <details className="study-card"><summary>{tr("История изменений курса")}</summary>{audit.map((a, i) => <p key={i}>{a.actor}<RoleBadge label={tr(a.actor_role_label)} /> · {auditCaption(a.action)} · {localDate(new Date(a.created_at), 'datetime')}</p>)}</details>
     </>}
   </section>
 }

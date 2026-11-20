@@ -4,7 +4,7 @@
 }
 
 .users-page h2 {
-  color: #1e293b;
+  color: var(--text);
 }
 
 .users-stats {
@@ -19,9 +19,9 @@
   max-width: 420px;
   padding: 14px;
   margin-bottom: 25px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-strong);
   border-radius: 10px;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 
 .users-table-wrap {
@@ -38,29 +38,29 @@
 }
 
 .users-table th {
-  background: #f1f5f9;
+  background: var(--surface-subtle);
   padding: 15px;
 }
 
 .users-table td {
   padding: 15px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .users-table tr:hover {
-  background: #f8fafc;
+  background: var(--bg);
 }
 
 .users-error {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .admin-responsibilities { margin-bottom: 28px; }
 .admin-responsibility-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-.admin-responsibility-grid h4 { margin: 0 0 16px; font-size: 17px; }
-.admin-responsibility-grid small { display: block; margin-top: 5px; color: var(--muted, #64748b); }
+.admin-responsibility-grid h4 { margin: 0 0 16px; font-size: var(--fs-h3); }
+.admin-responsibility-grid small { display: block; margin-top: 5px; color: var(--text-muted); }
 .admin-responsibility-tags { display: flex; gap: 8px; flex-wrap: wrap; }
-.admin-responsibility-tags span { background: var(--surface-brand); color: var(--primary-ink); border-radius: 6px; padding: 5px 9px; font-size: 12px; }
+.admin-responsibility-tags span { background: var(--surface-brand); color: var(--primary-ink); border-radius: 6px; padding: 5px 9px; font-size: var(--fs-caption); }
 .admin-responsibilities summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 800px) { .admin-responsibility-grid { grid-template-columns: 1fr; } }
 
@@ -81,7 +81,7 @@
 
 .add-user-btn {
   padding: 13px 22px;
-  background: #2563eb;
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 10px;
@@ -90,7 +90,7 @@
 }
 
 .add-user-btn:hover {
-  background: #1d4ed8;
+  background: var(--primary);
 }
 
 .student-form-card {
@@ -99,7 +99,7 @@
   border-radius: 14px;
   margin-top: 25px;
   max-width: 500px;
-  box-shadow: 0 4px 15px #0000000a;
+  box-shadow: 0 4px 15px var(--success);
 }
 
 .student-form-card form {
@@ -109,20 +109,20 @@
 }
 
 .student-form-card label {
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 
 .student-form-card input {
   padding: 13px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  font-size: 15px;
+  font-size: var(--fs-body);
 }
 
 .student-form-card button {
   padding: 14px;
-  background: #2563eb;
+  background: var(--accent);
   color: white;
   border: none;
   border-radius: 8px;
@@ -135,14 +135,14 @@
 }
 
 .users-success {
-  color: #15803d;
+  color: var(--primary-ink);
   font-weight: 600;
   margin-top: 20px;
 }
 
 
 .delete-user-btn {
-  background: #ef4444;
+  background: var(--border-strong);
   color: white;
   border: none;
   padding: 10px 16px;
@@ -153,10 +153,26 @@
 }
 
 .delete-user-btn:hover {
-  background: #dc2626;
+  background: var(--navy);
 }
 
 .delete-user-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Redesign phase 7: filters row, 44px table rows, row actions in ⋯. */
+.users-page .users-filters { display: flex; flex-wrap: wrap; gap: var(--sp-3); align-items: center; }
+.users-page .users-search { flex: 1 1 280px; max-width: 420px; width: auto; min-height: var(--ctl-md); margin: 0; padding: 0 var(--sp-3); border: 1px solid var(--border-strong); border-radius: var(--r-ctl); background: var(--surface); font-size: var(--fs-body); }
+.users-page .users-role-filter { min-height: var(--ctl-md); padding: 0 var(--sp-3); border: 1px solid var(--border-strong); border-radius: var(--r-ctl); background: var(--surface); color: var(--text); font-size: var(--fs-body); }
+.users-page:is(.users-search, .users-role-filter):focus { outline: none; border-color: var(--focus); box-shadow: var(--focus-ring); }
+.users-page .users-table-wrap { padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); box-shadow: none; }
+.users-page .users-table { width: 100%; border-collapse: collapse; }
+.users-page .users-table th { height: 36px; padding: 0 var(--sp-4); background: var(--surface-subtle); color: var(--text-muted); font-size: var(--fs-caption); font-weight: 500; text-align: left; border-bottom: 1px solid var(--border); }
+.users-page .users-table td { height: 44px; padding: var(--sp-2) var(--sp-4); font-size: var(--fs-body); border-bottom: 1px solid var(--border); vertical-align: middle; }
+.users-page .users-table tbody tr:last-child td { border-bottom: 0; }
+.users-page .users-table td strong { font-weight: 600; color: var(--heading); }
+.users-page .users-table td small { font-size: var(--fs-caption); }
+.users-page .users-actions { width: 1%; white-space: nowrap; text-align: right; }
+.users-page .users-actions .confirm-action { white-space: normal; text-align: left; font-size: var(--fs-small); }
+.users-page .users-actions .more-menu { display: inline-block; }
