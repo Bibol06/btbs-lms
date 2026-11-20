@@ -4,29 +4,8 @@ import { localizedLabels, t as tr } from '../../i18n/language'
 import { useEffect, useState } from 'react'
 import { apiRequest } from '../../api'
 import { errorMessage, formatDate } from '../study/types'
+import { useWorkspaceHome, type HomeData } from './useWorkspaceHome'
 
-type Task = { id: string; title: string; course: string; run: string; state: string; due_at: string | null; target: string }
-type HomeData = {
-  role: string; resume?: { title: string; lesson: string; target: string } | null; tasks?: Task[]
-  feedback?: { id: number; title: string; teacher: string; body: string; score: number | null; max_score: number; target: string; state: string; created_at: string }[]
-  works?: { id: number; assignment: string; student: string; run: string; review_state: string; target: string; review_due_at: string | null }[]
-  questions?: { id: number; student: string; body: string; target: string }[]; question_count?: number
-  attention?: { id: number; student: string; course: string; run: string; reasons: string[]; target: string }[]
-  counts?: { pending: number; overdue: number; unassigned: number; attention: number }
-  runs?: { id: number; title: string; course: string; kind: string }[]
-}
-
-function useWorkspaceHome() {
-  const [data, setData] = useState<HomeData | null>(null), [error, setError] = useState('')
-  const [revision, setRevision] = useState(0)
-  const personal = new URLSearchParams(location.hash.slice(1)).get('mode') === 'personal'
-  useEffect(() => {
-    let alive = true
-    apiRequest<HomeData>(`/api/workspace/home/?personal=${personal ? '1' : '0'}`).then(v => { if (alive) { setData(v); setError('') } }).catch(e => { if (alive) setError(errorMessage(e)) })
-    return () => { alive = false }
-  }, [personal, revision])
-  return { data, error, refresh: () => setRevision(v => v+1) }
-}
 
 const taskState: Record<string, string> = localizedLabels({ module_overdue: 'Дедлайн просрочен', revision: 'На доработку', late: 'Срок прошёл', closed: 'Приём закрыт', active_quiz: 'Тест уже идёт', open: 'Можно выполнить' })
 
@@ -36,13 +15,7 @@ export default function WorkspaceHome() {
   if (!data) return <p className="muted" role="status">{tr("Собираем ближайшие задачи…")}</p>
   if (data.role === 'student') return <div className="hub-home">
     {data.resume && <section className="hub-resume"><div><p className="eyebrow">{tr("Ваш следующий шаг")}</p><h3>{ct(data.resume, "title")}</h3><p>{ct(data.resume, "lesson")}</p></div><a className="primary-link" href={data.resume.target}>{tr("Продолжить обучение →")}</a></section>}
-    <div className="hub-columns"><section className="hub-panel"><div className="section-heading"><h3>{tr("Сегодня и скоро")}</h3><a href={`#page=deadlines${location.hash.includes('mode=personal') ? '&mode=personal' : ''}`}>{tr("Все сроки →")}</a></div>
-      {!data.tasks?.length && <p className="muted">{tr("Нет незавершённых заданий. Можно продолжать курс в своём темпе.")}</p>}
-      {data.tasks?.slice(0, 4).map(t => <a className="hub-row" href={t.target} key={t.id}><div><strong>{ct(t, "title")}</strong><small>{ct(t, "course")} · {ct(t, "run")}</small><span className={`hub-status ${['revision', 'late', 'closed', 'module_overdue'].includes(t.state) ? 'warning' : ''}`}>{taskState[t.state] || tr("К выполнению")}</span></div><time>{t.due_at ? formatDate(t.due_at) : tr("Без срока")}</time></a>)}
-    </section><section className="hub-panel"><div className="section-heading"><h3>{tr("Обратная связь")}</h3><span className="muted">{tr("Последние проверки")}</span></div>
-      {!data.feedback?.length && <p className="muted">{tr("Здесь появятся оценки и комментарии преподавателя.")}</p>}
-      {data.feedback?.slice(0, 3).map(f => <a className="hub-row" href={f.target} key={f.id}><div><strong>{ct(f, "title")}</strong><small>{f.teacher} {tr(" · Преподаватель")}</small><p>{ct(f, "body") || tr("Откройте работу, чтобы посмотреть результат.")}</p></div><span className="hub-score">{f.score === null ? tr("Доработка") : `${f.score}/${f.max_score}`}</span></a>)}
-    </section></div>
+    <StudentPanels data={data} />
   </div>
   return <div className="hub-home"><div className="hub-summary">
     {[[data.counts?.pending, tr("Работ на проверке"), 'reviews'], [data.counts?.overdue, tr("Проверок с задержкой"), 'reviews&state=overdue'], data.role === 'admin' ? [data.counts?.unassigned, tr("Без ответственного"), 'reviews&unassigned=1'] : [data.question_count, tr("Вопросов без ответа"), 'questions'], [data.counts?.attention, tr("Нужна поддержка"), 'attention']].map(([value, label, target]) => <a href={`#page=${target}`} key={String(label)}><strong>{value ?? 0}</strong><span>{ct(label)}</span><i>↗</i></a>)}
@@ -53,6 +26,17 @@ export default function WorkspaceHome() {
     {!data.questions?.length && <p className="muted">{tr("Новых вопросов без преподавательского ответа нет.")}</p>}
     {data.questions?.slice(0, 3).map(q => <a className="hub-row" href={q.target} key={q.id}><div><strong>{q.student}</strong><DiscussionBody comment={q} compact /></div><span>→</span></a>)}
   </section></div></div>
+}
+
+/** Student panels: upcoming tasks and the latest teacher feedback. */
+export function StudentPanels({ data }: { data: HomeData }) {
+  return <div className="hub-columns"><section className="hub-panel"><div className="section-heading"><h3>{tr("Сегодня и скоро")}</h3><a href={`#page=deadlines${location.hash.includes('mode=personal') ? '&mode=personal' : ''}`}>{tr("Все сроки →")}</a></div>
+      {!data.tasks?.length && <p className="muted">{tr("Нет незавершённых заданий. Можно продолжать курс в своём темпе.")}</p>}
+      {data.tasks?.slice(0, 4).map(t => <a className="hub-row" href={t.target} key={t.id}><div><strong>{ct(t, "title")}</strong><small>{ct(t, "course")} · {ct(t, "run")}</small><span className={`hub-status ${['revision', 'late', 'closed', 'module_overdue'].includes(t.state) ? 'warning' : ''}`}>{taskState[t.state] || tr("К выполнению")}</span></div><time>{t.due_at ? formatDate(t.due_at) : tr("Без срока")}</time></a>)}
+    </section><section className="hub-panel"><div className="section-heading"><h3>{tr("Обратная связь")}</h3><span className="muted">{tr("Последние проверки")}</span></div>
+      {!data.feedback?.length && <p className="muted">{tr("Здесь появятся оценки и комментарии преподавателя.")}</p>}
+      {data.feedback?.slice(0, 3).map(f => <a className="hub-row" href={f.target} key={f.id}><div><strong>{ct(f, "title")}</strong><small>{f.teacher} {tr(" · Преподаватель")}</small><p>{ct(f, "body") || tr("Откройте работу, чтобы посмотреть результат.")}</p></div><span className="hub-score">{f.score === null ? tr("Доработка") : `${f.score}/${f.max_score}`}</span></a>)}
+    </section></div>
 }
 
 export function AttentionPage() {

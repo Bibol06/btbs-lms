@@ -1,14 +1,98 @@
-.my-learning-page { min-width: 0; container-type: inline-size; }
-.my-learning-page .my-learning-courses { display: grid; grid-template-columns: minmax(0,1fr); gap: 20px; align-items: stretch; }
-@container (min-width: 600px) { .my-learning-page .my-learning-courses { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-@container (min-width: 930px) { .my-learning-page .my-learning-courses { grid-template-columns: repeat(3,minmax(0,1fr)); } }
-.my-learning-page .my-learning-courses > .empty-state { grid-column: 1 / -1; }
-.my-learning-page .my-learning-courses > .learning-course-card { min-width: 0; padding: 0; margin: 0; overflow: hidden; display: flex; flex-direction: column; }
-.my-learning-page .learning-course-body { min-width: 0; display: flex; flex-direction: column; flex: 1; padding: 22px; }
-.my-learning-page .learning-course-body h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; min-height: 2.6em; max-height: 2.6em; overflow: hidden; overflow-wrap: anywhere; line-height: 1.3; margin: 0 0 8px; }
-.my-learning-page .learning-course-body p { overflow-wrap: anywhere; font-size: 13px; }
-.my-learning-page .learning-course-body .learning-course-group { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; margin: 0 0 8px; }
-.my-learning-page .learning-course-about { width: fit-content; color: var(--teal,#087d89); font-size: 12px; text-underline-offset: 3px; margin-bottom: 16px; }
-.my-learning-page .learning-course-body > progress { width: 100%; margin: 2px 0 0; }
-.my-learning-page .learning-course-body > .action-row { margin-top: auto; padding-top: 12px; gap: 9px; flex-wrap: wrap; }
-.my-learning-page .learning-course-body .action-row > .primary-link { font-size: 12px; }
+/* My learning (redesign phase 4, see frontend/DESIGN_SPEC.md "Learning patterns"):
+   one wide Continue card, then the My courses grid, then tasks and feedback. */
+.my-learning-page { min-width: 0; container-type: inline-size; display: grid; gap: var(--sp-8); }
+.ml-header { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; min-width: 0; }
+.ml-header h2 { margin: 0; font-size: var(--fs-h1); line-height: var(--lh-h1); color: var(--heading); }
+.my-learning-page > .error { margin: calc(-1 * var(--sp-4)) 0 0; }
+
+/* Continue card */
+.ml-continue { display: grid; grid-template-columns: 200px minmax(0, 1fr) auto; align-items: center; gap: var(--sp-6); min-width: 0; padding: var(--sp-4); padding-right: var(--sp-6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); }
+.ml-continue-cover { align-self: stretch; overflow: hidden; border-radius: var(--r-ctl); background: var(--surface-subtle); }
+.ml-continue-cover .btbs-course-cover { height: 100%; min-height: 112px; }
+.ml-continue-body { display: grid; gap: var(--sp-1); min-width: 0; }
+.ml-continue-caption { margin: 0; color: var(--text-muted); font-size: var(--fs-small); line-height: var(--lh-small); font-weight: 500; }
+.ml-continue h3 { margin: 0; font-size: var(--fs-h2); line-height: var(--lh-h2); color: var(--heading); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ml-continue-step { margin: 0 0 var(--sp-2); color: var(--text); font-size: var(--fs-body); line-height: var(--lh-body); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ml-continue .ml-progress { max-width: 420px; }
+.ml-continue-action { white-space: nowrap; }
+
+/* Progress: 6px pill + text label */
+.ml-progress { display: flex; align-items: center; gap: var(--sp-3); min-width: 0; }
+.ml-progress-bar { flex: 1; min-width: 48px; height: 6px; border-radius: var(--r-pill); background: var(--surface-subtle); overflow: hidden; }
+.ml-progress-bar > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+.ml-progress-text { flex: none; color: var(--text-muted); font-size: var(--fs-caption); line-height: var(--lh-caption); font-variant-numeric: tabular-nums; }
+
+/* My courses */
+.ml-courses { display: grid; gap: var(--sp-4); min-width: 0; }
+.ml-courses-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; min-width: 0; }
+.ml-courses-head h3 { margin: 0; font-size: var(--fs-h2); line-height: var(--lh-h2); color: var(--heading); }
+.ml-segment { display: inline-flex; gap: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none; padding: 2px; border: 1px solid var(--border); border-radius: var(--r-ctl); background: var(--surface-subtle); }
+.content .ml-segment button { flex: none; max-width: none; overflow: visible; white-space: nowrap; gap: var(--sp-1); min-height: calc(var(--ctl-md) - 6px); padding: 0 var(--sp-3); background: transparent; color: var(--text-muted); border-color: transparent; border-radius: 4px; font-size: var(--fs-small); }
+.content .ml-segment button:hover:not(:disabled) { background: var(--surface); color: var(--text); }
+.content .ml-segment button[aria-pressed=true] { background: var(--surface); color: var(--text); border-color: var(--border); font-weight: 600; }
+.ml-count { margin-left: var(--sp-1); color: var(--text-muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+.ml-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-6); grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
+/* Whole card is one link: the title anchor is stretched; the ⋯ menu sits above it. */
+.ml-card { position: relative; display: flex; flex-direction: column; min-width: 0; overflow: visible; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); transition: border-color var(--dur-fast) var(--ease); }
+.ml-card:hover { border-color: var(--border-hover); }
+.ml-card:has(.ml-card-title a:focus-visible) { border-color: var(--primary); box-shadow: var(--focus-ring); }
+.ml-card-cover { order: -1; aspect-ratio: 5 / 2; overflow: hidden; border-radius: var(--r-card) var(--r-card) 0 0; background: var(--surface-subtle); }
+.ml-card-cover .btbs-course-cover { height: 100%; min-height: 0; }
+.ml-card-body { display: flex; flex-direction: column; gap: var(--sp-1); flex: 1; min-width: 0; padding: var(--sp-4); }
+.ml-card-title { margin: 0; padding-right: var(--sp-8); font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.ml-card-title a { color: var(--heading); text-decoration: none; }
+.ml-card-title a::after { content: ''; position: absolute; inset: 0; z-index: 1; border-radius: var(--r-card); }
+.ml-card-title a:focus-visible { outline: none; }
+.ml-card:hover .ml-card-title a { color: var(--primary-ink); }
+.ml-card-meta, .ml-card-note { margin: 0; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--fs-small); line-height: var(--lh-small); color: var(--text-muted); }
+.ml-card-note { color: var(--text); }
+.ml-card-body > .ml-progress { margin-top: auto; padding-top: var(--sp-3); }
+.ml-card-menu { position: absolute; z-index: 2; top: var(--sp-2); right: var(--sp-2); }
+.content .ml-card-menu .more-menu-trigger { background: var(--surface); border-color: var(--border); }
+.content .ml-card-menu .more-menu-trigger:hover:not(:disabled), .content .ml-card-menu .more-menu-trigger[aria-expanded=true] { background: var(--surface-subtle); }
+
+.ml-empty { display: grid; justify-items: start; gap: var(--sp-2); padding: var(--sp-8) var(--sp-6); border: 1px dashed var(--border-strong); border-radius: var(--r-card); background: var(--surface); }
+.ml-empty h3 { margin: 0; font-size: var(--fs-h3); line-height: var(--lh-h3); }
+.ml-empty p { margin: 0; color: var(--text-muted); }
+.ml-empty > a, .ml-empty > button { margin-top: var(--sp-2); }
+.ml-empty-inline { padding: var(--sp-6); }
+
+/* Tasks and feedback panels below the grid (shared hub styles, flattened here). */
+.my-learning-page > .hub-columns { gap: var(--sp-6); }
+.my-learning-page .hub-panel { box-shadow: none; padding: var(--sp-6); }
+.my-learning-page .hub-panel h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); }
+
+/* Join by invite code */
+.ml-join { border-top: 1px solid var(--border); padding-top: var(--sp-4); }
+.ml-join > summary { width: fit-content; color: var(--primary-ink); font-size: var(--fs-body); font-weight: 500; cursor: pointer; border-radius: var(--r-ctl); }
+.ml-join-form { display: grid; gap: var(--sp-2); max-width: 480px; margin-top: var(--sp-3); }
+.ml-join-form label { font-size: var(--fs-small); font-weight: 500; color: var(--text); }
+.ml-join-form > div { display: flex; gap: var(--sp-2); }
+.ml-join-form input { flex: 1; min-width: 0; min-height: var(--ctl-md); }
+
+/* Skeleton */
+.ml-skeleton .ml-continue-body > span, .ml-skeleton .ml-card-body > span { display: block; height: 12px; border-radius: 4px; background: var(--surface-subtle); }
+.ml-skeleton .ml-continue-body > span:first-child, .ml-skeleton .ml-card-body > span:first-child { height: 18px; width: 70%; }
+.ml-skeleton .ml-continue-body > span:last-child, .ml-skeleton .ml-card-body > span:last-child { width: 40%; }
+.ml-continue.ml-skeleton { grid-template-columns: minmax(0, 1fr); min-height: 112px; }
+.ml-skeleton { animation: ml-pulse 1.4s var(--ease) infinite alternate; }
+@keyframes ml-pulse { from { opacity: 1; } to { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .ml-skeleton { animation: none; } }
+
+@container (max-width: 760px) {
+  .ml-continue { grid-template-columns: minmax(0, 1fr); gap: var(--sp-3); padding: var(--sp-4); }
+  .ml-continue-cover { display: none; }
+  .ml-continue h3 { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
+  .ml-continue .ml-progress { max-width: none; }
+  .ml-continue-action { justify-self: stretch; }
+  .my-learning-page > .hub-columns { grid-template-columns: minmax(0, 1fr); }
+}
+@container (max-width: 599px) {
+  .my-learning-page { gap: var(--sp-6); }
+  .ml-header h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); }
+  .ml-grid { gap: var(--sp-3); }
+  .ml-card-cover { display: none; }
+  .ml-card-body { padding: var(--sp-3) var(--sp-4); }
+  .ml-card-title { font-size: var(--fs-body); line-height: var(--lh-body); }
+}

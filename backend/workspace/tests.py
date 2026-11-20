@@ -55,6 +55,15 @@ class WorkspaceTests(TestCase):
         self.assertEqual([v['id'] for v in self.client.get('/api/workspace/home/').json()['runs']], [self.a.id])
         self.assertEqual(self.client.get('/api/workspace/home/?personal=1').json()['role'], 'student')
 
+    def test_student_resume_names_its_enrollment(self):
+        # My learning matches the Continue card to the enrollment by id.
+        Enrollment.objects.filter(pk=self.e.pk).update(last_step=self.step, last_seen_at=timezone.now())
+        self.login(self.student)
+        resume = self.client.get('/api/workspace/home/').json()['resume']
+        self.assertEqual(resume['enrollment_id'], self.e.id)
+        self.assertEqual(resume['lesson'], 'Read')
+        self.assertIn(f'step={self.step.id}', resume['target'])
+
     def test_search_scopes_people_and_drafts(self):
         hidden = Course.objects.create(title='Secret', teacher=self.other)
         self.login(self.student)
