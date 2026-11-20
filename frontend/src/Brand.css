@@ -222,20 +222,9 @@ pre { background: var(--surface-subtle); color: var(--text); line-height: 1.6; b
 .deadline-pill { color: var(--primary-ink); background: var(--surface-brand); }
 
 /* Analytics */
-.analytics-hero { padding: 28px 30px; border-color: #dce7ed; border-radius: var(--radius); background: linear-gradient(110deg,#e9f2f7,#f4fafb); }
-.analytics-hero h1 { font-size: 29px; }
-.analytics-hero p { color: #587185; font-size: 13px; }
-.analytics-eyebrow { color: var(--teal) !important; font-size: var(--fs-caption); }
 .analytics-panel, .analytics-toolbar { padding: 24px; }
 .analytics-filter-grid label { color: #536a7e; font-size: 12px; }
-.content .analytics-periods button { padding: 8px 15px; font-size: 12px; }
 .analytics-tabs { border-bottom-color: var(--line); }
-.analytics-metric { padding: 21px 22px; }
-.analytics-metric > span { color: var(--muted); font-size: 12px; }
-.analytics-metric strong { color: var(--navy); font-size: 32px; font-weight: 600; }
-.analytics-metric small, .analytics-period-caption { color: var(--text-muted); }
-.analytics-metric.attention { border-color: #eedfcf; background: #fffcf8; }
-.analytics-metric.attention strong { color: #a06a35; }
 .analytics-chart svg text { fill: #73869a; font-size: var(--fs-caption); }
 .analytics-chart svg path { stroke: var(--teal); }
 .analytics-chart svg circle { fill: var(--teal); }
@@ -358,13 +347,8 @@ pre { background: var(--surface-subtle); color: var(--text); line-height: 1.6; b
   .account-button > span:last-child { max-width: 126px; }
   .topbar .header-actions .register-button { padding: 8px 10px; font-size: var(--fs-caption); }
   .content,.course-mode .content { padding-inline: 14px; }
-  .analytics-hero,.analytics-panel,.analytics-toolbar { padding: 19px; }
-  .analytics-hero h1 { font-size: 24px; }
-  .analytics-metric,.management-metric { padding: 17px 15px; }
-  .analytics-metric strong,.management-metric strong { font-size: 27px; }
   .material-metrics { gap: 10px; }
   .material-metrics strong { font-size: 22px; }
-  .content .analytics-periods button { padding: 8px 11px; font-size: var(--fs-caption); }
   .management-pagination { flex-wrap: wrap; font-size: 12px; }
   .teacher-stats { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
   .teacher-stats .card { padding: 15px 12px; }

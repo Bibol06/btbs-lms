@@ -88,3 +88,8 @@
 .results-summary-label { margin: 0; color: var(--text-muted); font-size: var(--fs-small); font-weight: 500; }
 .results-summary .progress { max-width: 560px; }
 .agenda-kind { margin: 0; color: var(--text-muted); font-size: var(--fs-caption); line-height: var(--lh-caption); }
+
+/* Text-style buttons for row actions in tables (no filled buttons per row). */
+.row-links { display: grid; gap: var(--sp-1); justify-items: start; }
+.content button.link-button, .content button.link-button:hover:not(:disabled) { min-height: 0; padding: 0; border: 0; background: transparent; color: var(--primary-ink); font-size: var(--fs-small); font-weight: 500; text-align: left; white-space: nowrap; }
+.content button.link-button:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; }
