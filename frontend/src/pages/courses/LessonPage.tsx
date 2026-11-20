@@ -1,6 +1,6 @@
 import CourseLanguageBadge from '../../components/CourseLanguageBadge'
 import { ct } from '../../i18n/content'
-import { localizedLabels, t as tr } from '../../i18n/language'
+import { countLabel, localizedLabels, t as tr } from '../../i18n/language'
 import { CourseTools } from '../workspace/AuthorTools'
 import { useEffect, useState } from 'react'
 import { apiRequest, enrollRequest, type User } from '../../api'
@@ -103,10 +103,14 @@ export default function LessonPage({ courseId, user, onBack, onNeedAuth, onEnrol
     catch (err) { setError(errorMessage(err)) }
   }
   return <div className="lesson-page notranslate" translate="no">
-    <div className="course-heading">
-      <div><button className="secondary back-btn" onClick={onBack}>{tr("← Все курсы")}</button><p className="eyebrow">{manage ? user?.role === 'admin' ? tr("Администрирование курса") : tr("Кабинет преподавателя курса") : tr("Учебный курс")}</p><h1>{ct(preview, "course") || tr("Загрузка курса…")}</h1><CourseLanguageBadge course={preview} /></div>
-      {run && <label className="run-selector">{manage ? tr("Ученики и результаты группы") : tr("Моя группа / формат обучения")}<select value={runId ?? ''} onChange={e => changeRun(Number(e.target.value))}>{runs.map(r => <option key={r.id} value={r.id}>{ct(r, "title")}{r.enrollment_id ? tr(" · Вы записаны") : ''}</option>)}</select></label>}
-    </div>
+    <header className="course-head">
+      <div className="course-head-main">
+        <nav className="course-breadcrumb" aria-label={tr("Навигационная цепочка")}><button type="button" onClick={onBack}><span aria-hidden="true">← </span>{tr("Все курсы")}</button></nav>
+        <h1>{ct(preview, "course") || tr("Загрузка курса…")}</h1>
+        <p className="course-head-meta">{manage ? <span>{user?.role === 'admin' ? tr("Администрирование курса") : tr("Кабинет преподавателя курса")}</span> : run && runs.length < 2 ? <span title={ct(run, "title")}>{ct(run, "title")}</span> : null}<CourseLanguageBadge course={preview} /></p>
+      </div>
+      {run && runs.length > 1 && <label className="run-selector">{manage ? tr("Ученики и результаты группы") : tr("Моя группа / формат обучения")}<select value={runId ?? ''} onChange={e => changeRun(Number(e.target.value))}>{runs.map(r => <option key={r.id} value={r.id}>{ct(r, "title")}{r.enrollment_id ? tr(" · Вы записаны") : ''}</option>)}</select></label>}
+    </header>
     {manage && run && <div className="course-author-tools"><a className="button-link" href={`#page=preview&course_id=${courseId}&run_id=${run.id}`}>{tr("Посмотреть глазами ученика")}</a><CourseTools courseId={courseId} title={preview?.course || tr("Курс")} displayTitle={ct(preview, 'course') || tr("Курс")} runId={run.id} canEdit={canEdit} /></div>}
     {error && <p role="alert" className="error">{tr(error)}</p>}{message && <p role="status" className="success">{tr(message)}</p>}
     {!preview && !error && <p>{tr("Загрузка курса…")}</p>}
@@ -123,7 +127,7 @@ export default function LessonPage({ courseId, user, onBack, onNeedAuth, onEnrol
       </aside><section className="course-main" aria-label={tr('Материалы курса')}>
       {canEdit && tab !== 'publication' && <CourseReadiness courseId={courseId} runId={run.id} revision={revision} compact onChanged={() => setRevision(v => v + 1)} onDetails={() => changeTab('publication')} onEditIssue={editIssue} />}
       {tab === 'plan' && <LearningPlan key={`${run.id}-${run.starts_at || ''}`} courseId={courseId} runId={run.id} canEditQuiz={canEdit} onSaved={() => setRevision(v => v + 1)} />}
-      {tab === 'overview' && <section className="course-overview"><p className="eyebrow">{tr('О курсе')}</p><h2>{ct(preview, 'course')}</h2><RichLessonContent content={ct(preview, 'description') || tr('Описание курса пока не добавлено.')} runId={run.id} /><div className="action-row"><button onClick={() => changeTab('lessons')}>{manage ? tr('Открыть редактор курса') : tr('Перейти к обучению')}</button>{canEdit && <button className="secondary" onClick={() => changeTab('publication')}>{tr('Проверить доступ ученика')}</button>}</div></section>}
+      {tab === 'overview' && <section className="course-overview"><h2>{tr('О курсе')}</h2><RichLessonContent content={ct(preview, 'description') || tr('Описание курса пока не добавлено.')} runId={run.id} /><div className="action-row"><button onClick={() => changeTab('lessons')}>{manage ? tr('Открыть редактор курса') : tr('Перейти к обучению')}</button>{canEdit && <button className="secondary" onClick={() => changeTab('publication')}>{tr('Проверить доступ ученика')}</button>}</div></section>}
       {tab === 'publication' && canEdit && <CourseReadiness courseId={courseId} runId={run.id} revision={revision} onChanged={() => setRevision(v => v + 1)} onDetails={() => changeTab('publication')} onEditIssue={editIssue} />}
       {tab === 'lessons' && <Curriculum key={`${run.id}-${revision}`} courseId={courseId} runId={run.id} courseTitle={ct(preview, 'course')} navigationHost={outlineHost} onNavigate={() => setMobileRailOpen(false)} />}
       {['assignments', 'quizzes', 'results'].includes(tab) && <StudyPanel key={`${tab}-${run.id}`} courseId={courseId} runId={run.id} tab={tab as 'assignments' | 'quizzes' | 'results'} />}
@@ -132,6 +136,16 @@ export default function LessonPage({ courseId, user, onBack, onNeedAuth, onEnrol
       {tab === 'groups' && manage && <GroupSettings key={run.id} courseId={courseId} run={run} canEdit={canEdit} refresh={() => setRevision(v => v + 1)} />}
       {tab === 'settings' && <section className="study-section">{canEdit && <article className="study-card"><h3>{tr("Публикация курса")}</h3><p className="muted">{preview.is_published ? tr("Курс опубликован и доступен для записи.") : tr("Курс находится в черновике.")} </p><button className="secondary" disabled={busy} onClick={publish}>{preview.is_published ? tr("Снять курс с публикации") : tr("Опубликовать курс")}</button></article>}{preview.is_published && user && <article className="study-card"><h3>{tr("Мои списки")}</h3><div className="action-row"><button className="secondary" onClick={() => bookmark('favorite')}>{tr("В избранное")}</button><button className="secondary" onClick={() => bookmark('wishlist')}>{tr("Хочу пройти")}</button></div></article>}<NotificationSettings key={run.id} courseId={courseId} runId={run.id} /></section>}
       </section></div>
-    </> : <div className="study-card"><section className="course-overview"><p className="eyebrow">{tr('О курсе')}</p><h2>{ct(preview, 'course')}</h2><RichLessonContent content={ct(preview, 'description') || tr('Описание курса пока не добавлено.')} runId={run.id} /></section><h3>{tr("Программа курса")}</h3>{preview.lessons.map(l => <p key={l.id}>{ct(l, "title")}</p>)}<div className="action-row"><button disabled={busy} onClick={enroll}>{tr("Записаться на курс")}</button><button className="secondary" onClick={() => bookmark('favorite')}>{tr("В избранное")}</button><button className="secondary" onClick={() => bookmark('wishlist')}>{tr("Хочу пройти")}</button></div></div>)}
+    </> : <div className="course-preview">
+      <div className="course-preview-main">
+        <section className="course-overview"><h2>{tr('О курсе')}</h2><RichLessonContent content={ct(preview, 'description') || tr('Описание курса пока не добавлено.')} runId={run.id} /></section>
+        {preview.lessons.length > 0 && <section className="course-preview-program"><h2>{tr("Программа курса")}</h2><ol>{preview.lessons.map(l => <li key={l.id}>{ct(l, "title")}</li>)}</ol></section>}
+      </div>
+      <aside className="course-preview-cta" aria-label={tr("Запись на курс")}>
+        <p>{countLabel(preview.lessons.length, 'lesson')}</p>
+        <button disabled={busy} onClick={enroll}>{tr("Записаться на курс")}</button>
+        <div className="course-preview-lists"><button className="ghost" onClick={() => bookmark('favorite')}>{tr("В избранное")}</button><button className="ghost" onClick={() => bookmark('wishlist')}>{tr("Хочу пройти")}</button></div>
+      </aside>
+    </div>)}
   </div>
 }

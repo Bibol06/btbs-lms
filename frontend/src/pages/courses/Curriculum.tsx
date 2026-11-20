@@ -211,10 +211,19 @@ export default function Curriculum({ courseId, runId, courseTitle = '', navigati
   if (!structure.can_manage) {
     const resume = all.find(s => s.id === selectedId && !s.locked) ?? all.find(s => !s.locked && !s.completed) ?? all.find(s => !s.locked)
     const done = structure.progress
-    return <section className="course-start">
-      <div className="course-start-hero"><div><h2>{courseTitle || tr("Программа курса")}</h2><p className="muted">{tr("Пройдено ")}{done.completed}/{done.total} {tr(" обязательных шагов · ")}{done.percent}%</p></div>
-        {resume && <button onClick={() => openAt(resume.id)}>{done.completed ? tr("Продолжить обучение →") : tr("Начать обучение →")}</button>}</div>
+    const finished = done.total > 0 && done.completed >= done.total
+    return <section className="course-start" aria-label={courseTitle || tr("Программа курса")}>
+      <div className="course-start-hero">
+        <div className="course-start-info">
+          <p className="course-start-caption">{finished ? tr("Курс пройден") : done.completed ? tr("Следующий шаг") : tr("Первый шаг")}</p>
+          {resume && !finished && <p className="course-start-step">{ct(resume, "title")}</p>}
+          <div className="course-start-progress"><span className="course-start-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={done.percent} aria-label={tr("Прогресс курса")}><span style={{ width: `${done.percent}%` }} /></span>
+            <small>{tr('{0} из {1} шагов · {2}%', [String(done.completed), String(done.total), String(done.percent)])}</small></div>
+        </div>
+        {resume && <button onClick={() => openAt(resume.id)}>{finished ? tr("Открыть курс") : done.completed ? tr("Продолжить обучение") : tr("Начать обучение")}</button>}
+      </div>
       {error && <p className="error" role="alert">{tr(error)}</p>}
+      <h2>{tr("Программа курса")}</h2>
       <CoursePlan modules={structure.modules} selectedId={selectedId} onSelect={openAt} />
     </section>
   }

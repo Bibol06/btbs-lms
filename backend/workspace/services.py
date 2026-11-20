@@ -140,7 +140,7 @@ def home_data(user, personal=False):
                 require_lesson_visible(user, e.last_step.lesson, e.run)
             except ApiError:
                 e.last_step = None
-        resume = {'title': e.course.title, 'lesson': e.last_step.title if e.last_step else 'Начните с первого доступного шага',
+        resume = {'enrollment_id': e.id, 'title': e.course.title, 'lesson': e.last_step.title if e.last_step else 'Начните с первого доступного шага',
             'target': f'/#course={e.course_id}&run={e.run_id}'+(f'&step={e.last_step_id}' if e.last_step_id else '')} if e else None
         return {'role': role, 'resume': resume, 'tasks': tasks, 'feedback': visible_feedback, 'server_now': now}
     runs = managed_runs(user)

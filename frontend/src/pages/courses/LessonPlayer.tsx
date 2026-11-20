@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { ct } from '../../i18n/content'
 import { t as tr } from '../../i18n/language'
+import { stepKindCaption } from '../../i18n/captions'
 import MaterialViewer from '../../components/MaterialViewer'
 import RichLessonContent from '../../components/RichLessonContent'
 import InlineStepQuiz from '../study/InlineStepQuiz'
@@ -21,9 +22,6 @@ export type PlayerDetail = { id: number; lesson_id: number; title: string; kind:
 type Props = { courseTitle: string; runId: number; courseId: number; modules: PlayerModule[]; step: PlayerDetail | null; selectedId: number | null; canManage: boolean; error: string
   onSelect: (id: number) => void; onComplete: (id: number) => Promise<boolean>; onRefresh: () => void; onExit: () => void; openDiscussion?: boolean }
 
-const ICONS: Record<string, string> = { video: '▶', code: '</>', quiz: '?', assignment: '✎', file: '📄', text: '≡' }
-
-function stepIcon(kind: string) { return ICONS[kind] ?? '≡' }
 
 function Modal({ title, onClose, children, wide = false }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   const dialog = useRef<HTMLDivElement>(null)
@@ -45,25 +43,47 @@ function Modal({ title, onClose, children, wide = false }: { title: string; onCl
   </div>
 }
 
+type PlanState = 'todo' | 'partial' | 'done' | 'locked' | 'current'
+
+/** Status mark (DESIGN_SPEC "Learning patterns"): empty circle, half, teal check, lock. */
+export function StatusIcon({ state }: { state: PlanState }) {
+  return <svg className={`status-icon is-${state}`} viewBox="0 0 20 20" width="20" height="20" aria-hidden="true">
+    {state === 'locked' ? <><rect x="5" y="9" width="10" height="7.5" rx="1.5" /><path d="M7.25 9V7a2.75 2.75 0 0 1 5.5 0v2" /></>
+      : <><circle cx="10" cy="10" r="7.25" />
+        {state === 'partial' && <path className="status-icon-fill" d="M10 2.75a7.25 7.25 0 0 1 0 14.5z" />}
+        {state === 'current' && <circle className="status-icon-fill" cx="10" cy="10" r="3.5" />}
+        {state === 'done' && <path className="status-icon-check" d="M6.5 10.25l2.4 2.4 4.6-5.1" />}</>}
+  </svg>
+}
+
+const stateLabel = (state: PlanState) => state === 'done' ? tr('Пройдено') : state === 'locked' ? tr('Закрыто') : state === 'partial' ? tr('В процессе') : state === 'current' ? tr('Текущий шаг') : tr('Не начато')
+
 /** Course plan: modules with progress, lessons and their steps. Used in the player and as the course start page. */
 export function CoursePlan({ modules, selectedId, onSelect }: { modules: PlayerModule[]; selectedId: number | null; onSelect: (id: number) => void }) {
   const [open, setOpen] = useState<Set<number>>(() => new Set(modules.filter(m => m.lessons.some(l => l.steps.some(s => s.id === selectedId))).map(m => m.id)))
   return <div className="course-plan">{modules.map(module => {
     const steps = module.lessons.flatMap(l => l.steps)
-    const percent = steps.length ? Math.round(steps.filter(s => s.completed).length * 100 / steps.length) : 0
+    const done = steps.filter(s => s.completed).length
+    const percent = steps.length ? Math.round(done * 100 / steps.length) : 0
+    const state: PlanState = steps.length && done === steps.length ? 'done' : done ? 'partial' : steps.length && steps.every(s => s.locked) ? 'locked' : 'todo'
     const expanded = open.has(module.id) || modules.length === 1
     return <section key={module.id} className="course-plan-module">
       <button type="button" className="course-plan-head" aria-expanded={expanded} onClick={() => setOpen(current => { const next = new Set(current); if (next.has(module.id)) next.delete(module.id); else next.add(module.id); return next })}>
-        <span className="course-plan-number">{module.position}</span><strong>{ct(module, 'title')}</strong>
-        <span className="course-plan-progress"><span className="course-plan-bar"><span style={{ width: `${percent}%` }} /></span>{percent}%</span>
+        <StatusIcon state={state} /><span className="visually-hidden">{stateLabel(state)}</span>
+        <span className="course-plan-name"><small>{tr('Модуль {0}', [String(module.position)])}</small><strong title={ct(module, 'title')}>{ct(module, 'title')}</strong></span>
+        <span className="course-plan-progress"><span className="course-plan-bar" aria-hidden="true"><span style={{ width: `${percent}%` }} /></span>{tr('{0} из {1}', [String(done), String(steps.length)])}</span>
+        <span className="course-plan-chevron" aria-hidden="true" />
       </button>
       {expanded && module.lessons.map(lesson => <div key={lesson.id} className="course-plan-lesson">
-        <p className="course-plan-lesson-title">{ct(lesson, 'title')}{lesson.locked_reason && <span className="muted"> · 🔒 {tr(lesson.locked_reason)}</span>}</p>
-        {lesson.steps.map(step => <button type="button" key={step.id} className={`course-plan-step ${step.id === selectedId ? 'is-current' : ''}`} disabled={step.locked} onClick={() => onSelect(step.id)}>
-          <span className="course-plan-icon" aria-hidden="true">{stepIcon(step.kind)}</span>
-          <span className="course-plan-step-title">{ct(step, 'title')}{!step.is_published ? tr(" · черновик") : ''}</span>
-          <span className="course-plan-state">{step.locked ? '🔒' : step.completed ? '✓' : ''}</span>
-        </button>)}
+        <p className="course-plan-lesson-title">{ct(lesson, 'title')}{lesson.locked_reason && <span className="course-plan-lock-reason"> · {tr(lesson.locked_reason)}</span>}</p>
+        {lesson.steps.map(step => {
+          const stepState: PlanState = step.locked ? 'locked' : step.completed ? 'done' : step.id === selectedId ? 'current' : 'todo'
+          return <button type="button" key={step.id} className={`course-plan-step ${step.id === selectedId ? 'is-current' : ''}`} aria-current={step.id === selectedId ? 'step' : undefined} disabled={step.locked} onClick={() => onSelect(step.id)}>
+            <StatusIcon state={stepState} /><span className="visually-hidden">{stateLabel(stepState)}: </span>
+            <span className="course-plan-step-title">{ct(step, 'title')}{!step.is_published ? tr(" · черновик") : ''}</span>
+            <span className="course-plan-kind">{stepKindCaption(step.kind)}</span>
+          </button>
+        })}
       </div>)}
     </section>
   })}</div>

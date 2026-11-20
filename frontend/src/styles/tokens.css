@@ -67,6 +67,21 @@
   --dur-menu: 150ms;
   --dur-modal: 250ms;
 
+  /* Code editor (dark practice theme) */
+  --editor-bg: #05192d;
+  --editor-panel: #0b2a47;
+  --editor-border: #1d3b5c;
+  --editor-grip: #3d5a78;
+  --editor-text: #e6edf5;
+  --editor-muted: #8fa3b8;
+  --editor-soft: #c6d2df;
+  --editor-accent: #03ef62;
+  --editor-error: #ffb4b4;
+  --editor-error-bg: #3b0d14;
+  --editor-bad: #ff7a85;
+  --editor-on-dark-hover: rgba(255, 255, 255, .08);
+  --editor-on-dark-line: rgba(255, 255, 255, .45);
+
   /* Legacy names used across older CSS; they now point at the tokens above. */
   --teal: var(--primary);
   --cyan: var(--accent);

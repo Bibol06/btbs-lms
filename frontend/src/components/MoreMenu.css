@@ -1,0 +1,11 @@
+/* "⋯" secondary-actions menu (DESIGN_SPEC: max 1 primary + 2 secondary visible, the rest in ⋯). */
+.more-menu { position: relative; flex: none; }
+.content .more-menu .more-menu-trigger { display: inline-grid; place-items: center; width: var(--ctl-md); min-height: var(--ctl-md); height: var(--ctl-md); padding: 0; border: 1px solid transparent; border-radius: var(--r-ctl); background: transparent; color: var(--text-muted); }
+.content .more-menu .more-menu-trigger:hover:not(:disabled), .content .more-menu .more-menu-trigger[aria-expanded=true] { background: var(--surface-subtle); color: var(--text); }
+.more-menu-trigger svg { fill: currentColor; }
+.more-menu-popover { position: absolute; top: calc(100% + var(--sp-1)); right: 0; z-index: 30; min-width: 200px; max-width: min(280px, calc(100vw - 32px)); padding: var(--sp-1); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-card); box-shadow: var(--sh-md); animation: more-menu-in var(--dur-menu) var(--ease); }
+.content .more-menu-popover > a, .content .more-menu-popover > button { display: flex; align-items: center; width: 100%; max-width: none; min-height: 34px; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-ctl); background: transparent; color: var(--text); font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 400; text-align: left; text-decoration: none; white-space: normal; }
+.content .more-menu-popover > a:hover, .content .more-menu-popover > button:hover:not(:disabled), .content .more-menu-popover > :focus-visible { background: var(--surface-subtle); color: var(--text); outline: none; }
+.content .more-menu-popover > .is-danger, .content .more-menu-popover > .is-danger:hover:not(:disabled) { color: var(--danger); }
+@keyframes more-menu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .more-menu-popover { animation: none; } }
